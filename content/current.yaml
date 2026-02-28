@@ -1,0 +1,164 @@
+# Agent Atlas — Qualitative Content
+# Manually maintained. Updated each snapshot cycle.
+# Quantitative data (skills count, LOC, etc.) comes from scan_repos.py.
+
+meta:
+  title: "Multi-Agent Architecture Overview"
+  org: "iosys AG"
+  subtitle: "Personal Agent Ecosystem"
+  version: "1.1"
+
+repos:
+  personal-agent:
+    purpose: "CEO hub: TODOs, calendar, email, billing, meetings"
+    maturity: production
+    self_audit: 69
+  cso-agent:
+    purpose: "Sales: HubSpot pipeline, forecasting, events"
+    maturity: mvp
+    self_audit: 59
+  cfo-agent:
+    purpose: "Finance: cashflow, bank imports, receipts, invoicing"
+    maturity: production
+    self_audit: 43
+  content-creator:
+    purpose: "LinkedIn posts, case studies, video collage, images"
+    maturity: production
+    self_audit: null
+  teaching-agent:
+    purpose: "Moodle LMS, Marp lecture slides, course validation"
+    maturity: operational
+    self_audit: null
+  optiverser:
+    purpose: "Meeting transcript pipeline (Windmill → Teams)"
+    maturity: operational
+    self_audit: null
+
+dependencies:
+  - from: cso-agent
+    to: personal-agent
+    flow: "/create-closing-offer skill, TODO routing to Eisenhower Matrix"
+  - from: cso-agent
+    to: cfo-agent
+    flow: "Revenue forecasts inform 13-week cashflow AR assumptions"
+  - from: cfo-agent
+    to: personal-agent
+    flow: "Financial TODOs, runway alerts"
+  - from: content-creator
+    to: personal-agent
+    flow: "Reads persona/writing-style.md for LinkedIn tone"
+  - from: content-creator
+    to: presentations
+    flow: "/case-study-presentation skill reference"
+  - from: teaching-agent
+    to: personal-agent
+    flow: "/semester-planning for calendar integration"
+  - from: personal-agent
+    to: optiverser
+    flow: "Same Optiverse API, different audience"
+
+impactful_skills:
+  personal-agent:
+    label: "top 10 of {count}"
+    skills:
+      - name: /billing-sync
+        impact: "2,036 LOC script; monthly invoicing pipeline (Toggl → Bexio)"
+      - name: /organize-inbox
+        impact: "Email → Linear ticket triage; primary intake funnel"
+      - name: /weekly-prep
+        impact: "Monday dashboard: calendar + TODOs + Linear"
+      - name: /send-meeting-recap
+        impact: "Optiverse → PDF → email draft for external stakeholders"
+      - name: /organize-meeting-transcripts
+        impact: "PRDs + relationship maps from customer calls"
+      - name: /strategic-planner
+        impact: "Strategy-as-YAML with testable hypotheses and confidence levels"
+      - name: /create-closing-offer
+        impact: "End-to-end sales closing package (Marp + offer + email)"
+      - name: /prep-meeting
+        impact: "Company research + attendee profiles before calls"
+      - name: /create-outlook-event
+        impact: "Graph API calendar with dual-calendar pattern"
+      - name: /create-linear-ticket
+        impact: "URL/context → structured Linear ticket"
+  cso-agent:
+    skills:
+      - name: /forecast
+        impact: "Weighted pipeline revenue projections with confidence intervals"
+      - name: /pipeline
+        impact: "Stale deal detection, concentration risk, health scoring"
+      - name: /event-postprocessing
+        impact: "Business card OCR → HubSpot contact upsert"
+  cfo-agent:
+    skills:
+      - name: /cashflow
+        impact: "13-week rolling forecast with runway calculation"
+      - name: /bank-import
+        impact: "CAMT.053/MT940 parsing into SQLite with dedup"
+      - name: /receipt-check
+        impact: "Bexio expense vs receipt reconciliation"
+  content-creator:
+    skills:
+      - name: /linkedin-post-creator
+        impact: "Bilingual posts with distinct DE/EN voice, style-calibrated"
+      - name: picture-generator
+        impact: "Gemini API with model fallback chain, brand-consistent imagery"
+      - name: video-collage
+        impact: "FFmpeg-based clip assembly for LinkedIn/YouTube (722 LOC)"
+  teaching-agent:
+    skills:
+      - name: /reverse-eng-slides
+        impact: "Story arc extraction → Marp slides with overflow detection"
+      - name: /prep-lecture
+        impact: "Pre-lecture briefing from Moodle enrollment + submissions"
+
+primitives:
+  - name: "CLAUDE.md → @AGENTS.md Redirect"
+    description: "Every repo uses a one-line CLAUDE.md pointing to AGENTS.md. Separates the Claude Code hook from the actual instructions."
+  - name: "Template-to-Local Config"
+    description: "config.template.yaml (committed) → config.local.yaml (gitignored). Same for .env.template → .env. Secrets never leak while keeping structure documented."
+  - name: "Skill-as-Folder"
+    description: ".claude/skills/{name}/SKILL.md with optional scripts/, templates/, *.yaml. Single-purpose, self-documenting, composable."
+  - name: "Tools as Pure Primitives, Logic in Prompts"
+    description: "Data-access layers have zero business logic. Forecasting, health scoring, confidence intervals — all in SKILL.md files. The agent reasons; code just fetches."
+  - name: "Solution Docs as Knowledge Base"
+    description: "docs/solutions/{category}/{slug}.md — ~80 files. Each: problem → investigation → root cause → solution → gotchas."
+  - name: "MCP for Auth, Scripts for Reliability"
+    description: "MCP servers handle authentication; actual operations use direct API calls (Python scripts). Token reuse pattern enables scripts to piggyback on MCP auth."
+  - name: "Self-Improvement Loop"
+    description: "Use → Observe friction → Refine primitive → Document in tasks/lessons.md. After every correction, capture the lesson."
+  - name: "Agent-Native Audit with Scoring"
+    description: "Formal self-audits scoring 8 principles: Action Parity, CRUD Completeness, Context Injection, Prompt-Native, Tools as Primitives, Shared Workspace, UI Integration, Capability Discovery."
+  - name: "Data Privacy Boundary Enforcement"
+    description: "Three-tier: Committed (anonymized), Gitignored (customer data), Never leave machine (financial)."
+  - name: "Dual-Calendar Pattern"
+    description: "Business events go to both Outlook (Graph API) and Nextcloud B&T (CalDAV). Availability checks query both."
+  - name: "Progressive Instruction Disclosure"
+    description: "AGENTS.md (skim) → instructions/*.md (read) → docs/solutions/* (dive deep). Three layers for context window efficiency."
+
+tensions:
+  - name: "Dual HubSpot access"
+    description: "personal-agent (MCP) and cso-agent (Python client) hit the same API without rate-limit coordination."
+  - name: "Optiverser library/flow divergence"
+    description: "Production-grade library scripts exist but aren't wired into the deployed flow (missing PII redaction, dedup, SSRF protection)."
+  - name: "Venv inconsistency"
+    description: "personal-agent: /tmp/ shared venv. cfo-agent: project-local .venv with uv. content-creator: per-skill venvs."
+  - name: "Content-creator dual skill dirs"
+    description: "skills/ (legacy) vs .claude/skills/ (slash commands) — some duplicated."
+  - name: "Cross-agent integration is conceptual"
+    description: "cso → cfo revenue forecast flow, cso → personal-agent TODO routing — documented but not automated."
+
+diagrams:
+  hub_spoke:
+    intro: "personal-agent is the orchestration hub. All other repos are specialized spokes that share conventions, file paths, and data flows — but operate independently in their own Claude Code sessions."
+    caption: "Fig 1 — Hub-and-spoke topology with key stats per repo"
+  dependencies:
+    caption: "Fig 2 — Directed data and skill flows between repos"
+  email_pipeline:
+    intro: "The primary intake funnel. Flagged Outlook emails are triaged by /organize-inbox into Linear tickets (customer/project work) or TODO items (CEO topics), using rule-based routing defined in rules.md."
+    caption: "Fig 3 — Email intake and triage pipeline"
+  filesystem:
+    intro: "The repos don't share code — they share paths. Multiple agents read and write to the same directories under ~/Documents/iosys/, with external APIs accessed by multiple repos in parallel."
+    caption: "Fig 4 — Filesystem and API access patterns across repos"
+  primitives:
+    caption: "Fig 5 — Primitives taxonomy by category"
