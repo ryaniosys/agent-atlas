@@ -1,0 +1,32 @@
+graph TD
+    subgraph CONFIG["Configuration"]
+        P1["CLAUDE.md →<br/>@AGENTS.md Redirect"]
+        P2["Template-to-Local<br/>Config Pattern"]
+        P11["Progressive<br/>Instruction Disclosure"]
+    end
+
+    subgraph ARCH["Architecture"]
+        P3["Skill-as-Folder"]
+        P4["Tools as Primitives<br/>Logic in Prompts"]
+        P6["MCP for Auth<br/>Scripts for Reliability"]
+    end
+
+    subgraph QUALITY["Quality & Safety"]
+        P7["Self-Improvement<br/>Loop"]
+        P8["Agent-Native<br/>Audit Scoring"]
+        P9["Data Privacy<br/>Boundary Enforcement"]
+    end
+
+    subgraph OPS["Operations"]
+        P5["Solution Docs<br/>as Knowledge Base"]
+        P10["Dual-Calendar<br/>Pattern"]
+    end
+
+    classDef config fill:#1a1a2e,stroke:#e94560,stroke-width:1px,color:#eee
+    classDef arch fill:#16213e,stroke:#0f3460,stroke-width:1px,color:#eee
+    classDef quality fill:#0a3d2e,stroke:#00b894,stroke-width:1px,color:#eee
+    classDef ops fill:#2d1b4e,stroke:#533483,stroke-width:1px,color:#eee
+    class P1,P2,P11 config
+    class P3,P4,P6 arch
+    class P7,P8,P9 quality
+    class P5,P10 ops

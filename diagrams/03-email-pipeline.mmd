@@ -1,0 +1,25 @@
+flowchart LR
+    EMAIL["📧 Outlook<br/>Inbox"]
+    FLAG["Flagged<br/>Emails"]
+    RULES["rules.md<br/>Triage Rules"]
+    TRIAGE{"/organize-inbox<br/>Skill"}
+    LINEAR["Linear<br/>Tickets"]
+    TODO["TODOs<br/>Eisenhower Matrix"]
+    ACTION["Actions"]
+
+    EMAIL -->|"auto-flag<br/>rules"| FLAG
+    RULES -.->|"informs"| TRIAGE
+    FLAG --> TRIAGE
+    TRIAGE -->|"customer/project"| LINEAR
+    TRIAGE -->|"CEO topics"| TODO
+    LINEAR --> ACTION
+    TODO --> ACTION
+
+    classDef input fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#fff
+    classDef process fill:#16213e,stroke:#0f3460,stroke-width:2px,color:#eee
+    classDef output fill:#0a3d2e,stroke:#00b894,stroke-width:2px,color:#eee
+    classDef config fill:#2d1b4e,stroke:#533483,stroke-width:1px,color:#ccc
+    class EMAIL input
+    class FLAG,TRIAGE process
+    class LINEAR,TODO,ACTION output
+    class RULES config

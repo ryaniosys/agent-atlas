@@ -1,0 +1,36 @@
+graph TD
+    FS["Shared Filesystem<br/>~/Documents/iosys/"]
+
+    SALES["documents_shared/sales/"]
+    EVENTS["documents_shared/events/"]
+    LICONTENT["~/Documents/personal/li-content/"]
+    MEDIA["media/webpage/source/"]
+    OPTIVERSE["Optiverse API"]
+    HUBSPOT["HubSpot API"]
+
+    PA["personal-agent"]
+    CSO["cso-agent"]
+    CC["content-creator"]
+
+    PA -->|"read/write"| SALES
+    CSO -->|"read/write"| SALES
+    CC -->|"read"| SALES
+
+    PA -->|"read/write"| EVENTS
+    CSO -->|"read"| EVENTS
+
+    PA -->|"read/write"| LICONTENT
+    CC -->|"read/write"| LICONTENT
+
+    CC -->|"output"| MEDIA
+
+    PA -->|"on-demand"| OPTIVERSE
+    PA -->|"MCP server"| HUBSPOT
+    CSO -->|"Python client"| HUBSPOT
+
+    classDef path fill:#16213e,stroke:#0f3460,stroke-width:2px,color:#eee
+    classDef agent fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#fff
+    classDef api fill:#2d1b4e,stroke:#533483,stroke-width:2px,color:#ccc
+    class SALES,EVENTS,LICONTENT,MEDIA,FS path
+    class PA,CSO,CC agent
+    class OPTIVERSE,HUBSPOT api
