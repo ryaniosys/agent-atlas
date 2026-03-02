@@ -1,5 +1,8 @@
 # Agent Atlas
 
+> [!WARNING]
+> **Experimental** — This project is under active development and subject to breaking changes, refactoring, and restructuring without notice. It is provided as-is with no warranty of any kind. Use at your own risk.
+
 Architecture snapshots and evolution tracking for a multi-agent ecosystem.
 
 ## Structure
