@@ -1,0 +1,170 @@
+# Agent Atlas — Qualitative Content
+# Manually maintained. Updated each snapshot cycle.
+# Quantitative data (skills count, LOC, etc.) comes from scan_repos.py.
+
+meta:
+  title: "Multi-Agent Architecture Overview"
+  org: "Example Corp"
+  subtitle: "Agent Ecosystem"
+  version: "1.1"
+
+repos:
+  hub-agent:
+    purpose: "Orchestration hub: TODOs, calendar, email, meetings"
+    maturity: production
+    self_audit: 69
+  sales-agent:
+    purpose: "Sales: CRM pipeline, forecasting, events"
+    maturity: mvp
+    self_audit: 59
+  finance-agent:
+    purpose: "Finance: cashflow, bank imports, receipts, invoicing"
+    maturity: production
+    self_audit: 43
+  content-agent:
+    purpose: "Social posts, case studies, video collage, images"
+    maturity: production
+    self_audit: null
+  education-agent:
+    purpose: "LMS platform, lecture slides, course validation"
+    maturity: operational
+    self_audit: null
+  pipeline-agent:
+    purpose: "Meeting transcript processing pipeline"
+    maturity: operational
+    self_audit: null
+
+dependencies:
+  - from: sales-agent
+    to: hub-agent
+    flow: "/create-closing-offer skill, TODO routing to Eisenhower Matrix"
+  - from: sales-agent
+    to: finance-agent
+    flow: "Revenue forecasts inform 13-week cashflow AR assumptions"
+  - from: finance-agent
+    to: hub-agent
+    flow: "Financial TODOs, runway alerts"
+  - from: content-agent
+    to: hub-agent
+    flow: "Reads persona/writing-style.md for tone"
+  - from: content-agent
+    to: presentations
+    flow: "/case-study-presentation skill reference"
+  - from: education-agent
+    to: hub-agent
+    flow: "/semester-planning for calendar integration"
+  - from: hub-agent
+    to: pipeline-agent
+    flow: "Same transcript API, different audience"
+
+impactful_skills:
+  hub-agent:
+    label: "top 10 of {count}"
+    skills:
+      - name: /billing-sync
+        impact: "2,036 LOC script; monthly invoicing pipeline (time tracking → ERP)"
+      - name: /organize-inbox
+        impact: "Email → ticket triage; primary intake funnel"
+      - name: /weekly-prep
+        impact: "Monday dashboard: calendar + TODOs + tickets"
+      - name: /send-meeting-recap
+        impact: "Transcript → PDF → email draft for external stakeholders"
+      - name: /organize-meeting-transcripts
+        impact: "PRDs + relationship maps from customer calls"
+      - name: /strategic-planner
+        impact: "Strategy-as-YAML with testable hypotheses and confidence levels"
+      - name: /create-closing-offer
+        impact: "End-to-end sales closing package (slides + offer + email)"
+      - name: /prep-meeting
+        impact: "Company research + attendee profiles before calls"
+      - name: /create-outlook-event
+        impact: "Graph API calendar with dual-calendar pattern"
+      - name: /create-linear-ticket
+        impact: "URL/context → structured ticket"
+  sales-agent:
+    skills:
+      - name: /forecast
+        impact: "Weighted pipeline revenue projections with confidence intervals"
+      - name: /pipeline
+        impact: "Stale deal detection, concentration risk, health scoring"
+      - name: /event-postprocessing
+        impact: "Business card OCR → CRM contact upsert"
+  finance-agent:
+    skills:
+      - name: /cashflow
+        impact: "13-week rolling forecast with runway calculation"
+      - name: /bank-import
+        impact: "Bank statement parsing into SQLite with dedup"
+      - name: /receipt-check
+        impact: "ERP expense vs receipt reconciliation"
+  content-agent:
+    skills:
+      - name: /linkedin-post-creator
+        impact: "Bilingual posts with distinct DE/EN voice, style-calibrated"
+      - name: picture-generator
+        impact: "AI image generation with model fallback chain, brand-consistent imagery"
+      - name: video-collage
+        impact: "CLI-based clip assembly for social/video platforms (722 LOC)"
+  education-agent:
+    skills:
+      - name: /reverse-eng-slides
+        impact: "Story arc extraction → presentation slides with overflow detection"
+      - name: /prep-lecture
+        impact: "Pre-lecture briefing from LMS enrollment + submissions"
+
+primitives:
+  - name: "CLAUDE.md → @AGENTS.md Redirect"
+    description: "Every repo uses a one-line CLAUDE.md pointing to AGENTS.md. Separates the Claude Code hook from the actual instructions."
+  - name: "Template-to-Local Config"
+    description: "config.template.yaml (committed) → config.local.yaml (gitignored). Same for .env.template → .env. Secrets never leak while keeping structure documented."
+  - name: "Skill-as-Folder"
+    description: ".claude/skills/{name}/SKILL.md with optional scripts/, templates/, *.yaml. Single-purpose, self-documenting, composable."
+  - name: "Tools as Pure Primitives, Logic in Prompts"
+    description: "Data-access layers have zero business logic. Forecasting, health scoring, confidence intervals — all in SKILL.md files. The agent reasons; code just fetches."
+  - name: "Solution Docs as Knowledge Base"
+    description: "docs/solutions/{category}/{slug}.md — ~80 files. Each: problem → investigation → root cause → solution → gotchas."
+  - name: "MCP for Auth, Scripts for Reliability"
+    description: "MCP servers handle authentication; actual operations use direct API calls (Python scripts). Token reuse pattern enables scripts to piggyback on MCP auth."
+  - name: "Self-Improvement Loop"
+    description: "Use → Observe friction → Refine primitive → Document in tasks/lessons.md. After every correction, capture the lesson."
+  - name: "Agent-Native Audit with Scoring"
+    description: "Formal self-audits scoring 8 principles: Action Parity, CRUD Completeness, Context Injection, Prompt-Native, Tools as Primitives, Shared Workspace, UI Integration, Capability Discovery."
+  - name: "Data Privacy Boundary Enforcement"
+    description: "Three-tier: Committed (anonymized), Gitignored (customer data), Never leave machine (financial)."
+  - name: "Dual-Calendar Pattern"
+    description: "Business events go to both primary calendar (Graph API) and secondary calendar (CalDAV). Availability checks query both."
+  - name: "Progressive Instruction Disclosure"
+    description: "AGENTS.md (skim) → instructions/*.md (read) → docs/solutions/* (dive deep). Three layers for context window efficiency."
+
+tensions:
+  - name: "Dual CRM access"
+    description: "Hub agent (MCP) and sales agent (Python client) hit the same CRM API without rate-limit coordination."
+  - name: "Library/flow divergence"
+    description: "Production-grade library scripts not yet wired into deployed flow."
+  - name: "Venv inconsistency"
+    description: "Hub agent: /tmp/ shared venv. Finance agent: project-local .venv with uv. Content agent: per-skill venvs."
+  - name: "Content agent dual skill dirs"
+    description: "skills/ (legacy) vs .claude/skills/ (slash commands) — some duplicated."
+  - name: "Cross-agent integration is conceptual"
+    description: "Sales → finance revenue forecast flow, sales → hub TODO routing — documented but not automated."
+
+blueprint:
+  template_repo: "your-org/template-agent"
+  blueprint_file: "blueprints/best-practices.md"
+  conventions_count: 11
+  last_full_audit: "2026-03-02"
+
+diagrams:
+  hub_spoke:
+    intro: "The hub agent is the orchestration center. All other repos are specialized spokes that share conventions, file paths, and data flows — but operate independently in their own Claude Code sessions."
+    caption: "Fig 1 — Hub-and-spoke topology with key stats per repo"
+  dependencies:
+    caption: "Fig 2 — Directed data and skill flows between repos"
+  email_pipeline:
+    intro: "The primary intake funnel. Flagged emails are triaged by /organize-inbox into tickets (customer/project work) or TODO items (executive topics), using rule-based routing defined in rules.md."
+    caption: "Fig 3 — Email intake and triage pipeline"
+  filesystem:
+    intro: "The repos don't share code — they share paths. Multiple agents read and write to the same directories under ~/Documents/shared/, with external APIs accessed by multiple repos in parallel."
+    caption: "Fig 4 — Filesystem and API access patterns across repos"
+  primitives:
+    caption: "Fig 5 — Primitives taxonomy by category"

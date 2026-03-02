@@ -1,0 +1,25 @@
+# Agent Atlas Configuration
+# Copy to config.local.yaml and customize for your environment.
+
+org:
+  name: "Your Organization"
+  subtitle: "Agent Ecosystem"
+
+# Where to write generated snapshots (outside the repo)
+# Keeps rendered HTML/PDF out of version control.
+output_dir: ~/Documents/architecture/agent-atlas
+
+# Repos to scan (paths relative to ~/git_repos/)
+repos:
+  - name: hub-agent
+    purpose: "Central orchestration hub"
+  - name: sales-agent
+    purpose: "CRM and pipeline management"
+  - name: finance-agent
+    purpose: "Invoicing, cashflow, bank imports"
+  - name: content-agent
+    purpose: "Social media, case studies, video, images"
+  - name: education-agent
+    purpose: "LMS platform, lecture slides"
+  - name: pipeline-agent
+    purpose: "Meeting transcript processing"

@@ -1,0 +1,19 @@
+graph TD
+    PA["<b>hub-agent</b><br/>Orchestration Hub<br/>42 skills · 6 MCP<br/>~80 solution docs"]
+
+    CSO["<b>sales-agent</b><br/>Sales / CRM<br/>4 skills · 1150 LOC<br/>CRM client"]
+    CFO["<b>finance-agent</b><br/>Finance<br/>3 skills · 5700 LOC<br/>ERP + banking"]
+    CC["<b>content-agent</b><br/>Content & Media<br/>6 skills · 1219 LOC<br/>image + video"]
+    TA["<b>education-agent</b><br/>Education<br/>4 skills · 1 MCP<br/>LMS + slides"]
+    OPT["<b>pipeline-agent</b><br/>Meeting Pipeline<br/>0 skills · 650 LOC<br/>workflow engine"]
+
+    PA --- CSO
+    PA --- CFO
+    PA --- CC
+    PA --- TA
+    PA --- OPT
+
+    classDef hub fill:#1a1a2e,stroke:#e94560,stroke-width:3px,color:#fff
+    classDef spoke fill:#16213e,stroke:#0f3460,stroke-width:2px,color:#eee
+    class PA hub
+    class CSO,CFO,CC,TA,OPT spoke

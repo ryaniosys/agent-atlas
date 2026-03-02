@@ -1,0 +1,23 @@
+graph LR
+    CSO["sales-agent"]
+    PA["hub-agent"]
+    CFO["finance-agent"]
+    CC["content-agent"]
+    TA["education-agent"]
+    OPT["pipeline-agent"]
+    PRES["presentations"]
+
+    CSO -->|"closing-offer skill<br/>TODO routing"| PA
+    CSO -->|"revenue forecasts<br/>→ AR assumptions"| CFO
+    CFO -->|"financial TODOs<br/>runway alerts"| PA
+    CC -->|"reads writing-style.md<br/>for tone"| PA
+    CC -->|"case-study-presentation"| PRES
+    TA -->|"semester-planning<br/>calendar sync"| PA
+    PA -->|"Transcript API<br/>PDF recaps"| OPT
+
+    classDef hub fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#fff
+    classDef spoke fill:#16213e,stroke:#0f3460,stroke-width:2px,color:#eee
+    classDef ext fill:#0a0a1a,stroke:#533483,stroke-width:1px,color:#bbb
+    class PA hub
+    class CSO,CFO,CC,TA,OPT spoke
+    class PRES ext

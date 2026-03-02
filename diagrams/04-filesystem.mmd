@@ -1,0 +1,36 @@
+graph TD
+    FS["Shared Filesystem<br/>~/Documents/shared/"]
+
+    SALES["documents_shared/sales/"]
+    EVENTS["documents_shared/events/"]
+    LICONTENT["~/Documents/personal/content/"]
+    MEDIA["media/webpage/source/"]
+    TRANSCRIPT["Transcript API"]
+    CRM["CRM API"]
+
+    PA["hub-agent"]
+    CSO["sales-agent"]
+    CC["content-agent"]
+
+    PA -->|"read/write"| SALES
+    CSO -->|"read/write"| SALES
+    CC -->|"read"| SALES
+
+    PA -->|"read/write"| EVENTS
+    CSO -->|"read"| EVENTS
+
+    PA -->|"read/write"| LICONTENT
+    CC -->|"read/write"| LICONTENT
+
+    CC -->|"output"| MEDIA
+
+    PA -->|"on-demand"| TRANSCRIPT
+    PA -->|"MCP server"| CRM
+    CSO -->|"Python client"| CRM
+
+    classDef path fill:#16213e,stroke:#0f3460,stroke-width:2px,color:#eee
+    classDef agent fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#fff
+    classDef api fill:#2d1b4e,stroke:#533483,stroke-width:2px,color:#ccc
+    class SALES,EVENTS,LICONTENT,MEDIA,FS path
+    class PA,CSO,CC agent
+    class TRANSCRIPT,CRM api
