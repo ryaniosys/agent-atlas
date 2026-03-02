@@ -16,16 +16,20 @@
 
 ### 1. Instruction Architecture
 
-- [ ] `CLAUDE.md` is a one-liner `@AGENTS.md` redirect
-- [ ] `AGENTS.md` is the primary instruction doc
+- [ ] `CLAUDE.md` is a one-liner `@AGENTS.md` redirect — never put content here
+- [ ] `AGENTS.md` is the primary agent instruction doc (loaded into context every session)
+- [ ] `README.md` is the human-facing doc (setup, rationale, references)
+- [ ] Two audiences, two files: `README.md` for humans, `AGENTS.md` for agents
 - [ ] Progressive disclosure: `AGENTS.md` → `instructions/*.md` → `docs/solutions/*`
 - [ ] `PRD.md` for product vision, capability map, and roadmap
 
-**Why:** Separates the Claude Code hook from actual instructions. Progressive disclosure keeps the context window lean — only load deeper docs when needed.
+**Why:** Agents and humans need different things. Agents need lean, structured instructions optimized for context windows. Humans need rationale, design decisions, setup guides, and external references. Mixing the two wastes context tokens on content the agent doesn't need, or leaves humans without the "why". The `CLAUDE.md` file is strictly a hook — `@AGENTS.md` redirect, nothing else.
 
-**Template ref:** `CLAUDE.md`, `AGENTS.md`, `PRD.md`, `instructions/`
+**Template ref:** `CLAUDE.md`, `AGENTS.md`, `README.md`, `PRD.md`, `instructions/`
 
-**Origin:** personal-agent (2025-Q3), adopted across all repos by 2025-Q4.
+**Refs:** [Claude Code Settings](https://code.claude.com/docs/en/settings) (official settings hierarchy)
+
+**Origin:** personal-agent (2025-Q3), adopted across all repos by 2025-Q4. Two-audience split formalized in template-agent (2026-03).
 
 ---
 
@@ -160,13 +164,15 @@
 - [ ] Shard markdown files >300 lines by time period
 - [ ] Keep AGENTS.md agnostic — general patterns, not specific cases
 - [ ] Update after corrections (don't repeat mistakes)
-- [ ] `README.md` for external/setup context, `AGENTS.md` for agent context
+- [ ] `README.md` for humans: setup guides, design rationale, external references
+- [ ] `AGENTS.md` for agents: lean structured instructions, reference tables, paths
+- [ ] Never duplicate content between the two — link instead
 
-**Why:** Long files get truncated in context windows. Sharding keeps content accessible. Separating README (human) from AGENTS.md (agent) serves both audiences.
+**Why:** Long files get truncated in context windows. Sharding keeps content accessible. The two-audience split (see also Convention #1) ensures agents get lean context while humans get the "why" and setup instructions they need.
 
-**Template ref:** AGENTS.md → Updating Documentation section
+**Template ref:** AGENTS.md → Updating Documentation section, `README.md`
 
-**Origin:** personal-agent AGENTS.md grew past 500 lines (2026-01). Sharding pattern documented in `docs/solutions/workflow-patterns/markdown-file-sharding.md`.
+**Origin:** personal-agent AGENTS.md grew past 500 lines (2026-01). Sharding pattern documented in `docs/solutions/workflow-patterns/markdown-file-sharding.md`. Two-audience split formalized in template-agent (2026-03).
 
 ---
 
