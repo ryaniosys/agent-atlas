@@ -1,0 +1,47 @@
+# Contributing to agent-atlas
+
+Thanks for your interest in contributing! This guide covers the basics.
+
+## How to Contribute
+
+1. **Fork** the repository
+2. **Create a branch** from `main` using the naming convention below
+3. **Make your changes** following the guidelines in this document
+4. **Open a pull request** against `main`
+
+## Branch Naming
+
+| Prefix | Use |
+|--------|-----|
+| `feat/` | New features |
+| `fix/` | Bug fixes |
+| `refactor/` | Refactoring |
+| `docs/` | Documentation |
+
+## Commit Messages
+
+We use [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+type(scope): description
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
+
+## What to Contribute
+
+- **Blueprints** — best practices, audit checklists, architecture patterns
+- **Snapshots** — architecture snapshots following the existing format in `snapshots/`
+- **Content** — cross-references, evolution notes, ecosystem documentation
+
+Before contributing a new blueprint, check [`blueprints/best-practices.md`](blueprints/best-practices.md) to understand the existing conventions.
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant v2.1](CODE_OF_CONDUCT.md). Please read it before participating.
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.
+
+Copyright Ryan iosys GmbH
