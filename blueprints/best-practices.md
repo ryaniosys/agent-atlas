@@ -78,7 +78,9 @@
 
 **Template ref:** `.claude/skills/example-skill/SKILL.md`
 
-**Checklist:** See `docs/solutions/skill-creation/agent-native-skill-authoring-checklist.md` in hub agent.
+**Checklist:** See [skill-authoring-checklist.md](skill-authoring-checklist.md).
+
+**Reliability:** See [agent-reliability.md](agent-reliability.md) for the determinism ladder — push each skill step to the highest rung possible.
 
 **Origin:** Ecosystem-wide from initial setup. Agent-native checklist added after skill failures in autonomous execution.
 
