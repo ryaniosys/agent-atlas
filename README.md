@@ -3,7 +3,22 @@
 > [!WARNING]
 > **Experimental** — This project is under active development and subject to breaking changes, refactoring, and restructuring without notice. It is provided as-is with no warranty of any kind. Use at your own risk.
 
-Architecture snapshots and evolution tracking for a multi-agent ecosystem.
+Architecture blueprints and best practices for building multi-agent systems — developed while building our own agent ecosystem at [iosys](https://iosys.swiss).
+
+## Why This Exists
+
+Scaling from one AI agent to many that collaborate reliably is an architectural challenge, not just a technical one. Agent Atlas documents the conventions, patterns, and pitfalls we encounter along the way — so we (and others) don't repeat the same mistakes.
+
+## What's Inside
+
+- **`blueprints/`** — Conventions and audit checklists for agent repositories (see [best-practices.md](blueprints/best-practices.md))
+- **`snapshots/`** — Point-in-time architecture snapshots tracking how the ecosystem evolves
+- **`diagrams/`** — System architecture visualizations (Mermaid sources + rendered SVGs)
+
+## Who This Is For
+
+- **Teams exploring multi-agent architectures** — patterns to consider before building
+- **Our own team** — this is our living reference, evolving with every iteration
 
 ## Structure
 
