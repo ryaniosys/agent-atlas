@@ -148,6 +148,12 @@ tensions:
   - name: "Cross-agent integration is conceptual"
     description: "cso → cfo revenue forecast flow, cso → personal-agent TODO routing — documented but not automated."
 
+blueprint:
+  template_repo: "ryaniosys/template-agent"
+  blueprint_file: "blueprints/best-practices.md"
+  conventions_count: 11
+  last_full_audit: "2026-03-02"
+
 diagrams:
   hub_spoke:
     intro: "personal-agent is the orchestration hub. All other repos are specialized spokes that share conventions, file paths, and data flows — but operate independently in their own Claude Code sessions."

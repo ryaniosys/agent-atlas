@@ -50,7 +50,17 @@ cp snapshots/YYYY-MM/architecture-overview.pdf ~/Desktop/
 xdg-open snapshots/YYYY-MM/architecture-overview.pdf
 ```
 
-### 6. Commit and push
+### 6. Blueprint audit (optional)
+
+Review `blueprints/best-practices.md` audit matrix against scan results:
+- Check each repo against the 11 conventions
+- Update ✅/⚠️/❌ status in the matrix
+- Update `last_full_audit` date in `content/current.yaml`
+- Create Linear tickets (`infra` label, `iosys` team) for any new compliance gaps
+
+Skip this step if pressed for time — it can be done separately.
+
+### 7. Commit and push
 
 Commit new snapshot, updated YAML (if changed), and any re-rendered SVGs.
 
