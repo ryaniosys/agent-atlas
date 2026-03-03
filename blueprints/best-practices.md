@@ -45,6 +45,8 @@
 
 **Template ref:** `.claude/settings.json`, `.gitignore`
 
+**Deep dive:** [secrets-management.md](secrets-management.md) — threat model, mitigation options, and layered defense recommendations.
+
 **Origin:** Hardened after credential leaks observed in production agents.
 
 ---
