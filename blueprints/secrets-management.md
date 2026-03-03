@@ -13,7 +13,7 @@ The agent (Claude Code) is the threat. It can:
 3. **Exfiltrate during debugging** — inject credentials into `curl` commands when troubleshooting auth errors
 4. **Access any file on disk** the user's shell can access
 
-The goal: **Python code reads secrets at runtime via `os.environ.get()`, but the agent never sees the actual values.**
+The goal: **Application code reads secrets at runtime via `os.environ.get()`, but the agent never sees the actual values.**
 
 ## Current State of Claude Code
 
@@ -27,6 +27,60 @@ There is **no first-class secrets mechanism** in Claude Code today. Relevant ope
 | [#2695][gh-2695] | Zero-trust architecture with client-side detection | Open |
 
 The official [security docs][claude-security] cover permission prompts and sandboxing but say nothing about redacting env var values from the model's context.
+
+## Why Deny Rules Alone Are Not Enough
+
+Deny rules are the obvious first step, but they have three fundamental problems:
+
+### 1. Permissions are tool-scoped, not file-scoped
+
+Each tool is a separate permission check. Denying one tool does not block another from reaching the same file.
+
+```json
+"deny": ["Read(.env)"]
+```
+
+This blocks Claude's `Read` tool. It does **not** block `Bash(cat .env)`, `Grep` searching inside `.env`, or any other tool. To protect a file, you must deny **every tool** that could reach it ([source][claude-permissions]):
+
+```json
+"deny": [
+  "Read(.env)",
+  "Read(.env.*)",
+  "Bash(cat *.env*)",
+  "Bash(head *.env*)",
+  "Bash(tail *.env*)",
+  "Bash(source *.env*)",
+  "Bash(. .env*)"
+]
+```
+
+> `Read` deny rules propagate to `Grep` and `Glob` on a "best-effort" basis per the docs — but "best effort" is not a guarantee.
+
+### 2. Bash deny patterns are fragile
+
+Bash deny rules match against the **command string**, not file paths. `Bash(.env)` only matches a command literally named `.env` — it does not match `cat .env`.
+
+Even with wildcard patterns like `Bash(cat *.env*)`, the agent can bypass them:
+
+```bash
+python3 -c "print(open('.env').read())"    # not matched by cat pattern
+head -c 999 .e?v                            # glob avoids literal ".env"
+base64 .env | base64 -d                     # indirect read
+```
+
+The [official docs][claude-permissions] acknowledge this: Bash patterns that constrain command arguments are inherently fragile.
+
+### 3. Deny rules have enforcement bugs
+
+Multiple open issues report `Read` deny rules being silently ignored:
+
+| Issue | Version | Status |
+|-------|---------|--------|
+| [#6699][gh-6699] | — | Open |
+| [#24846][gh-24846] | — | Open |
+| [#27040][gh-27040] | v2.1.49 (Feb 2026) | Open |
+
+**Bottom line:** Use deny rules as a first layer (they cost nothing), but do not rely on them as your only defense.
 
 ---
 
@@ -67,32 +121,39 @@ Zero-knowledge proxy that stores secrets in the OS keychain (GNOME Keyring / mac
 
 ---
 
-### Option C: Hook-Based Filtering (cc-filter)
+### Option C: PreToolUse Hook (Recommended)
 
-**Security: Medium** | **Complexity: Medium** | **Platform: Cross-platform**
+**Security: Medium-High** | **Complexity: Medium** | **Platform: Cross-platform**
 
-PreToolUse hooks intercept tool calls before execution. A script inspects the tool input (via stdin JSON) and blocks commands that would expose secrets (`cat .env`, `printenv`, `echo $TOKEN`, `grep password`). Can also create sanitized file copies in `/tmp/`.
+PreToolUse hooks intercept tool calls **before execution**, independently of the permission system. Unlike deny rules, hooks are not subject to the enforcement bugs documented in [#6699][gh-6699] / [#27040][gh-27040]. A hook script receives the tool call as JSON on stdin and exits with code 2 to block it (stderr is shown to the agent as the rejection reason).
 
-Five protection layers: hard file block, smart redaction, command blocking, search blocking, prompt blocking.
+Register in `.claude/settings.json` or `.claude/settings.local.json`:
 
 ```json
 {
   "hooks": {
     "PreToolUse": [{
-      "matcher": "Bash|Read|Grep",
+      "matcher": "Bash|Read|Grep|Glob",
       "hooks": [{
         "type": "command",
-        "command": "/path/to/protect-secrets.sh"
+        "command": "scripts/hooks/protect-secrets.sh"
       }]
     }]
   }
 }
 ```
 
-**Pros:** Works on any platform. Layered defense.
-**Cons:** Must anticipate all access patterns. Creative commands can bypass it. Deny-list approach (block known-bad) is inherently weaker than allow-list.
+The hook script inspects the tool input and blocks access to sensitive files (`.env*`, `*.pem`, `*.key`) and env-dumping commands (`printenv`, `env`, `set`). It operates on the actual tool input JSON, so it can inspect file paths for `Read`/`Grep`/`Glob` calls and command strings for `Bash` calls in one place.
 
-**Ref:** [cc-filter on GitHub][cc-filter]
+**Why hooks are more reliable than deny rules:**
+- Hooks execute as an external process — not subject to Claude Code's permission-matching bugs
+- A single hook covers all tools (Read, Bash, Grep, Glob) with file-scoped logic
+- The hook sees the full command/path, enabling regex matching instead of fragile glob patterns
+- Exit code 2 is a hard block — the tool call never executes
+
+**Cons:** Must anticipate access patterns. Deny-list approach (block known-bad) is inherently weaker than allow-list. Adds ~50ms latency per tool call.
+
+**Ref:** [cc-filter on GitHub][cc-filter] (full implementation), [Claude Code hooks docs][claude-hooks]
 
 ---
 
@@ -166,27 +227,26 @@ Run Claude Code inside a purpose-built container. Secrets are NOT passed as env 
 
 ## Recommendation
 
-**Layered defense.** No single mechanism is sufficient.
+**Layered defense.** No single mechanism is sufficient today.
 
-For a **Linux workstation** running local agent repos:
+| Layer | Mechanism | What it blocks | Reliability |
+|-------|-----------|----------------|-------------|
+| 1 | Deny rules in settings.json | Casual reads of `.env`, `printenv` | Low — has enforcement bugs |
+| 2 | PreToolUse hook script | All tool-based access to secret files | High — external process, not subject to permission bugs |
+| 3 | Remove `load_dotenv()` from code | Agent-triggered `.env` reads during import | High — structural |
+| 4 | Wrapper script with `exec` | Secrets only in child process, never in agent's shell | High — structural |
+| 5 | Bubblewrap (optional, Linux) | OS-level `.env` file access | Highest — kernel enforcement |
 
-| Layer | Mechanism | Blocks |
-|-------|-----------|--------|
-| 1 | Deny rules in `.claude/settings.json` | Casual reads of `.env`, `printenv` |
-| 2 | Remove `load_dotenv()` from code | Agent-triggered file reads during import |
-| 3 | Wrapper script with `exec` | Secrets only in child process |
-| 4 | Bubblewrap (optional) | OS-level `.env` file access |
-| 5 | PreToolUse hooks (optional) | Creative bypass attempts |
-
-**Minimum viable setup:** Layers 1 + 2 + 3. Add 4 and 5 for higher assurance.
+**Minimum viable setup:** Layers 1 + 2 + 3 + 4. Add 5 for maximum assurance on Linux.
 
 ### What to do today
 
-1. Store secrets in a CLI-accessible password manager (Bitwarden, 1Password, `pass`, etc.)
-2. Create `scripts/run-with-secrets.sh` — loads secrets via CLI, execs Python
-3. Remove `load_dotenv()` calls from Python code (read `os.environ` only)
-4. Add deny rules to `.claude/settings.json` blocking `.env` reads and env dumps
-5. Never `source` secrets into the shell where Claude Code runs
+1. Add deny rules to settings.json — cheap first layer, even if imperfect
+2. Add a PreToolUse hook script — the most reliable application-level defense
+3. Remove `load_dotenv()` / equivalent from application code — read `os.environ` only
+4. Store secrets in a CLI-accessible password manager (`pass`, `bw`, `op`, etc.)
+5. Create a wrapper script that loads secrets via CLI and `exec`s the application
+6. Never `source` secrets into the shell where Claude Code runs
 
 ### What to watch for
 
@@ -207,11 +267,16 @@ For a **Linux workstation** running local agent repos:
 
 [knostic]: https://www.knostic.ai/blog/claude-loads-secrets-without-permission "Knostic — Claude loads secrets without permission"
 [claude-security]: https://code.claude.com/docs/en/security "Claude Code Security Docs"
+[claude-permissions]: https://code.claude.com/docs/en/permissions "Claude Code Permissions Docs"
+[claude-hooks]: https://code.claude.com/docs/en/hooks "Claude Code Hooks Docs"
 [claude-devcontainer]: https://code.claude.com/docs/en/devcontainer "Claude Code Devcontainer Docs"
 [gh-25053]: https://github.com/anthropics/claude-code/issues/25053 "GitHub #25053 — Mark sensitive env vars"
 [gh-29910]: https://github.com/anthropics/claude-code/issues/29910 "GitHub #29910 — Built-in secrets manager"
 [gh-23642]: https://github.com/anthropics/claude-code/issues/23642 "GitHub #23642 — 1Password op:// references"
 [gh-2695]: https://github.com/anthropics/claude-code/issues/2695 "GitHub #2695 — Zero-trust architecture"
+[gh-6699]: https://github.com/anthropics/claude-code/issues/6699 "GitHub #6699 — Deny permissions not enforced"
+[gh-24846]: https://github.com/anthropics/claude-code/issues/24846 "GitHub #24846 — Read deny not enforced for .env"
+[gh-27040]: https://github.com/anthropics/claude-code/issues/27040 "GitHub #27040 — Deny permissions ignored (Feb 2026)"
 [bubblewrap-blog]: https://patrickmccanna.net/a-better-way-to-limit-claude-code-and-other-coding-agents-access-to-secrets/ "Patrick McCanna — Bubblewrap approach"
 [agentsecrets]: https://github.com/The-17/agentsecrets "AgentSecrets — Zero-knowledge proxy"
 [cc-filter]: https://github.com/wissem/cc-filter "cc-filter — Hook-based secret protection"
