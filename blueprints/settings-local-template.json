@@ -1,0 +1,13 @@
+{
+  "_comment": "Recommended settings.local.json template for agent repos. Copy to .claude/settings.local.json and customize.",
+  "permissions": {
+    "allow": [
+      "Read:/tmp/**",
+      "Write:/tmp/**",
+      "Bash(rm /tmp/*)",
+      "Edit:.claude/**",
+      "Write:.claude/**",
+      "WebFetch"
+    ]
+  }
+}
