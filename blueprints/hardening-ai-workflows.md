@@ -1,15 +1,15 @@
 # Hardening AI-Orchestrated Workflows
 
-> **Status:** Pattern validated in production (billing sync, Mar 2026). Applicable to any multi-step workflow where an AI agent executes business-critical operations.
+> **Status:** Pattern validated in production (Mar 2026). Applicable to any multi-step workflow where an AI agent executes business-critical operations.
 >
 > **Last updated:** 2026-03-05
 
 ## Problem
 
-AI agents orchestrating multi-step workflows (invoicing, data pipelines, deployments) tend to **rediscover the same failure modes** every session. Without guard clauses, each session relies on the operator remembering what went wrong last time. This creates:
+AI agents orchestrating multi-step workflows (data pipelines, deployments, document generation) tend to **rediscover the same failure modes** every session. Without guard clauses, each session relies on the operator remembering what went wrong last time. This creates:
 
 - **Silent failures** — missing config, incomplete data, stale state
-- **Irreversible mistakes** — mutations applied before validation (e.g., Bexio snapshots addresses at invoice creation; can't fix after)
+- **Irreversible mistakes** — mutations applied before validation (e.g., an API that snapshots data at creation time; can't fix after)
 - **Double-application bugs** — idempotency violations when retrying or resuming
 - **AI improvisation in customer-facing output** — non-deterministic email text, wrong formatting
 
@@ -25,9 +25,9 @@ After each workflow execution, record failures as structured lessons:
 
 | # | What Went Wrong | Root Cause | Prevention |
 |---|----------------|------------|------------|
-| 1 | Addresses incomplete on invoice | Bexio snapshots at creation | Validate BEFORE creation |
-| 2 | PDF crashed on em-dash | fpdf2/Helvetica ASCII-only | Sanitize descriptions |
-| 3 | Duplicate invoices created | No check for existing drafts | Preflight query |
+| 1 | Addresses incomplete on document | API snapshots at creation | Validate BEFORE creation |
+| 2 | PDF crashed on em-dash | Font renderer ASCII-only | Sanitize text input |
+| 3 | Duplicate records created | No check for existing drafts | Preflight query |
 
 **Key insight:** Most workflow failures fall into 4 categories:
 1. **Missing prerequisite** — config field, API credential, upstream data
@@ -86,24 +86,24 @@ Use your language's type system to catch config errors at load time:
 
 ```python
 # Bad: silent fallthrough on typos
-due_date_rule: str | None = None
+payment_rule: str | None = None
 
 # Good: Pydantic catches invalid values before execution
-due_date_rule: Literal["end_of_month", "net_30", "net_10"] | None = None
+payment_rule: Literal["end_of_month", "net_30", "net_10"] | None = None
 ```
 
 For functions that handle config-driven branching, raise on unknown values instead of defaulting:
 
 ```python
-# Bad: unknown rule silently becomes net_10
+# Bad: unknown rule silently becomes the default
 if rule == "net_30":
-    return invoice_date + timedelta(days=30)
-return invoice_date + timedelta(days=10)  # catch-all
+    return base_date + timedelta(days=30)
+return base_date + timedelta(days=10)  # catch-all
 
 # Good: unknown rule fails fast
 if rule is None or rule == "net_10":
-    return invoice_date + timedelta(days=10)
-raise ValueError(f"Unknown due_date_rule: {rule!r}")
+    return base_date + timedelta(days=10)
+raise ValueError(f"Unknown rule: {rule!r}")
 ```
 
 ### Step 5: Hardcode Customer-Facing Output
@@ -111,9 +111,9 @@ raise ValueError(f"Unknown due_date_rule: {rule!r}")
 Templates for emails, reports, and notifications should be **literal strings in the skill definition**, not AI-generated:
 
 ```markdown
-## Email Template (DE)
-Subject: Rechnung {month} – {company}
-Body: Guten Tag, anbei die Rechnung für {month}...
+## Email Template
+Subject: {document_type} {period} – {company}
+Body: Dear {recipient}, please find attached...
 ```
 
 **Why:** AI-generated customer-facing text varies between sessions. A hardcoded template ensures consistency and allows the business owner to review once, not every time.
@@ -133,7 +133,7 @@ Body: Guten Tag, anbei die Rechnung für {month}...
 Helper functions extracted by this pattern are inherently testable:
 
 - **Pure functions** (sanitizers, calculators) — unit test with edge cases, no mocks needed
-- **Lookup functions** — test with fixture YAML files (exact match, case-insensitive, missing)
+- **Lookup functions** — test with fixture config files (exact match, case-insensitive, missing)
 - **Preflight functions** — mock external API calls, test all warning paths + happy path
 - **Approval gates** — not testable in isolation (they're orchestration), but the functions they call are
 
@@ -149,26 +149,20 @@ Helper functions extracted by this pattern are inherently testable:
 - [ ] Write tests for all helper functions
 - [ ] Update SKILL.md with guard clauses referencing the functions
 
-## Real-World Example
+## Real-World Results
 
-The billing sync workflow (Toggl hours → Bexio invoices) accumulated 12 lessons over 3 months. These were distilled into:
+Applying this pattern to a multi-step document generation workflow with external API integrations:
 
-- **4 helper functions:** `sanitize_descriptions()`, `calculate_due_date()`, `get_known_address()`, `run_preflight()`
-- **3 approval gates:** after preview, after deliverables, before marking sent
-- **Pydantic Literal types:** `due_date_rule`, `billing_model`
-- **Hardcoded email templates:** DE/EN, no AI improvisation
+- **4 helper functions** extracted (sanitizer, calculator, lookup, preflight)
+- **3 approval gates** (after preview, after deliverables, before state transition)
+- **Pydantic Literal types** on all config-driven branching fields
+- **Hardcoded templates** for all customer-facing output
 - **28 new tests** covering all helper functions
 
-Result: billing workflow went from "requires operator memory of past failures" to "deterministic execution with explicit guard clauses."
+Result: workflow went from "requires operator memory of past failures" to "deterministic execution with explicit guard clauses."
 
 ## Cross-References
 
 - [Best Practices](best-practices.md) — convention 4 (Skills) covers SKILL.md structure
 - [Agent Reliability](agent-reliability.md) — complementary pattern for error handling and retries
 - [Secrets Management](secrets-management.md) — preflight checks can verify credential availability
-
-## Sources
-
-- cfo-agent PR #23: preflight validation & workflow hardening
-- cfo-agent `docs/solutions/billing/preflight-validation-and-workflow-hardening.md`
-- Bexio API: address snapshot behavior (contact_address immutable after invoice creation)
