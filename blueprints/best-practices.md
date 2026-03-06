@@ -254,6 +254,36 @@ When multiple subagents write output files in parallel, use a timestamped run di
 
 **Origin:** Discovered after concurrent subagent runs collided on shared `/tmp` paths, producing merged output from different workflow invocations.
 
+---
+
+### 14. User Preference Feedback Loops
+
+When a skill generates multiple options (drafts, variants, designs), log the user's selection to build a preference profile over time.
+
+- [ ] Generate multiple variants (3+ with genuinely different angles, not rewording)
+- [ ] Present variants with clear labels describing each angle
+- [ ] Log selections to a persistent preference file (markdown, not code)
+- [ ] Include: date, topic, selected/rejected variants, angle preference, user feedback
+- [ ] Periodically review the log and promote patterns to the skill's style guide
+- [ ] Use preference history to weight future generation toward preferred angles
+
+**Why:** Single-variant generation is a coin flip. Multi-variant with logging creates a compounding feedback loop: the agent gets better at predicting what the user wants without explicit style rules. The preference log also serves as an audit trail for style evolution.
+
+**Example structure:**
+```
+~/Documents/personal/content-drafts/variant-preferences.md
+
+## 2026-03-06: acme-blog-post
+
+**Selected:** A (direct), B (reflective)
+**Rejected:** C (hot take)
+**Angle preference:** Prefers depth over provocation in DE
+```
+
+**Origin:** Content authoring workflows where multi-variant generation with preference tracking produced measurably better first-draft acceptance rates over time.
+
+---
+
 ## Repo Audit Matrix
 
 | # | Convention | hub-agent | sales-agent | finance-agent | content-agent | education-agent | pipeline-agent |
