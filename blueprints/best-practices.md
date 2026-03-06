@@ -198,6 +198,62 @@
 
 ---
 
+## Multi-Agent Patterns
+
+### 12. Parallel Plan Review with Scope Constraints
+
+When reviewing plans, PRDs, or design docs, launch 3+ specialized reviewer agents in parallel — each with a fixed scope and distinct perspective.
+
+- [ ] Scope is locked upfront: "scope is fixed, no negotiation — improvements and blind spots only"
+- [ ] Each reviewer has a distinct lens (e.g., architecture, simplicity, domain-specific)
+- [ ] Reviewers run in parallel, writing to separate output files
+- [ ] Main agent synthesizes findings into a prioritized action table: bugs, high-value improvements, simplifications, nice-to-haves
+- [ ] Fixes are applied, then a final pass verifies no ambiguity remains
+
+**Why:** A single reviewer misses things. Multiple sequential reviews are slow and context-heavy. Parallel reviewers with locked scope prevent scope creep while surfacing blind spots from different angles. The synthesis step forces prioritization instead of a flat list of nitpicks.
+
+**Example:**
+
+```
+main agent
+  ├── reviewer-1: "architecture — are boundaries clean?"
+  ├── reviewer-2: "simplicity — what can be removed?"
+  └── reviewer-3: "domain expert — does this match how the domain works?"
+  │
+  └── synthesize → action table → apply fixes → verify
+```
+
+**Origin:** Emerged from PRD review workflows where single-pass reviews consistently missed cross-cutting concerns.
+
+---
+
+### 13. Run-Scoped Temporary Directories for Multi-Agent Workflows
+
+When multiple subagents write output files in parallel, use a timestamped run directory to isolate their work.
+
+- [ ] Create a run directory: `/tmp/{workflow}-{ISO-timestamp}/`
+- [ ] Each subagent writes to disjoint files within the run dir (no shared paths)
+- [ ] Main agent is the single writer to persistent storage (no concurrent writes to final locations)
+- [ ] Subagents write `.done` or `.error` sentinel files for partial failure detection
+- [ ] Main agent consolidates results after all subagents complete
+- [ ] Entire run dir is cleaned up after successful consolidation
+
+**Why:** Without run isolation, stale files from prior failed runs or concurrent invocations cause silent data corruption. Timestamped directories make each run independent. Sentinel files let the main agent detect partial failures without parsing output content. Single-writer to persistent storage eliminates race conditions.
+
+**Example:**
+
+```
+/tmp/plan-review-2026-03-06T14:30:00/
+  ├── reviewer-arch.md          # subagent 1 output
+  ├── reviewer-arch.done        # sentinel: success
+  ├── reviewer-simplicity.md    # subagent 2 output
+  ├── reviewer-simplicity.done  # sentinel: success
+  ├── reviewer-domain.md        # subagent 3 output
+  └── reviewer-domain.error     # sentinel: failure (main agent handles gracefully)
+```
+
+**Origin:** Discovered after concurrent subagent runs collided on shared `/tmp` paths, producing merged output from different workflow invocations.
+
 ## Repo Audit Matrix
 
 | # | Convention | hub-agent | sales-agent | finance-agent | content-agent | education-agent | pipeline-agent |
