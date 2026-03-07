@@ -60,12 +60,19 @@ Before presenting options, read the log and apply:
 ## Applicable Skills
 
 Any skill that processes a stream of items with user-guided decisions:
-- Email triage (organize-inbox)
-- Browser tab management (organize-tabs)
-- File organization
-- Ticket routing
+- Email triage and routing
+- Browser tab management
+- File organization and classification
+- Ticket routing and prioritization
 - Content curation
+- Incoming inspection disposition (accept, rework, reject, quarantine)
+- Production order scheduling and machine assignment
+- Non-conformance categorization and corrective action routing
 
-## Example Implementation
+## Manufacturing Examples
 
-See the organize-tabs skill in the hub agent repo — Decision Log section.
+**Incoming Quality Inspection:** An agent inspects purchase order receipts against specs. Each lot gets a disposition decision (accept / rework / reject / quarantine). After 3+ sessions, the agent learns that supplier X's material Y is consistently accepted and proposes auto-accept as a default, while supplier Z's shipments frequently need rework — flagging them for closer inspection.
+
+**Production Scheduling:** An agent assigns work orders to machines or lines. The operator repeatedly moves high-priority orders to Line A and batches small orders on Line B. Over time, the agent proposes routing rules: "Orders >500 units → Line A, orders <100 units → batch on Line B."
+
+**Non-Conformance Routing:** When defects are logged, the agent asks the quality engineer how to categorize and route each one (root cause category, corrective action owner). After accumulating decisions, it suggests defaults: "Dimensional issues → machining team, surface defects → finishing team."
