@@ -54,6 +54,19 @@ Use exact tool names returned (e.g., mcp__plugin_...__browser_navigate).
 3. If missing: "Create config.local.yaml from template and fill required fields."
 ```
 
+**Manufacturing pattern:**
+```markdown
+### Step 0: Verify Prerequisites
+
+1. Check OPC-UA endpoint connectivity:
+   curl -s http://opcua-gateway:4840/status | grep -q "running" && echo "OK"
+
+2. Verify ERP API credentials:
+   source /path/to/.env && test -n "$ERP_API_KEY" && echo "OK"
+
+3. If OPC-UA unreachable: "Check gateway status — sensor data will not be available."
+```
+
 ### 3. Timing & Async Operations
 
 - [ ] Identify all async operations (page loads, API calls)
