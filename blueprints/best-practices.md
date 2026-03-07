@@ -9,6 +9,7 @@
 - **Existing repos:** Audit against the checklist below
 - **Monthly:** Review during agent-atlas `/snapshot` cycle, update audit matrix
 - **After corrections:** If a pattern emerges from `tasks/lessons.md` across multiple repos, promote it here
+- **Cross-industry:** These conventions apply equally to service-industry agents (CRM, email, content) and manufacturing agents (quality, scheduling, supply chain). Examples throughout use both domains.
 
 ---
 

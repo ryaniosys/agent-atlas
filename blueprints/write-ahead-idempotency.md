@@ -89,6 +89,8 @@ def complete_record(db, content_hash: str) -> None:
 - You already have a local database for tracking state
 - Retrying the external call would create unwanted duplicates
 
+**Manufacturing example:** Reporting a non-conformance to an external quality system (SAP QM, MES). The agent detects an out-of-spec measurement, creates a write-ahead record locally, then posts the NCR to SAP. If the process crashes after the SAP call but before local completion, retry finds the pending record and skips the duplicate NCR creation.
+
 **Don't use when:**
 - The external API supports idempotency keys — just use those
 - The external API deduplicates naturally (e.g., HTTP 409 on conflict)
