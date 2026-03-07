@@ -97,6 +97,20 @@ Wrap LLM judgment inside deterministic scaffolding:
 
 Compare: all 7 steps as LLM calls (98% each) = **86.8%**.
 
+**Manufacturing variant — Incoming Goods Inspection:**
+
+```
+[Deterministic] Fetch purchase order and spec sheet from ERP
+[Deterministic] Read measurement data from gauge/sensor
+[Stochastic]    Classify defect from inspection photo (LLM vision)
+[Deterministic] Log measurement results against tolerance limits
+[Stochastic]    Recommend disposition: accept / rework / reject (LLM judgment)
+[Deterministic] Create quality record in MES via API
+[Deterministic] Update lot status in ERP
+```
+
+5 deterministic + 2 stochastic = same reliability math as the email example.
+
 ### Pattern 2: Validate After Every Stochastic Step
 
 Never chain LLM outputs without a validation checkpoint:
@@ -162,6 +176,9 @@ If the answer is in a table, read the table. Don't ask an LLM to reason about it
 
 - **Bad:** "What's the VAT rate for Switzerland?" → LLM
 - **Good:** `config['vat_rates']['CH']` → 8.1%
+
+- **Bad:** "What's the tolerance for part XYZ-100?" → LLM
+- **Good:** `spec_sheet['XYZ-100']['tolerance_mm']` → ±0.05mm
 
 ---
 
