@@ -3,11 +3,13 @@
 > [!WARNING]
 > **Experimental** — This project is under active development and subject to breaking changes, refactoring, and restructuring without notice. It is provided as-is with no warranty of any kind. Use at your own risk.
 
-Architecture blueprints and best practices for building multi-agent systems — developed while building our own agent ecosystem at [iosys](https://iosys.swiss).
+Architecture blueprints and best practices for building multi-agent systems — from back-office workflows to quality, production, and supply chain operations. Developed while building our own agent ecosystem at [iosys](https://iosys.swiss).
 
 ## Why This Exists
 
 Scaling from one AI agent to many that collaborate reliably is an architectural challenge, not just a technical one. Agent Atlas documents the conventions, patterns, and pitfalls we encounter along the way — so we (and others) don't repeat the same mistakes.
+
+The same patterns that keep a sales pipeline agent reliable also apply to agents running quality inspections, scheduling production orders, or coordinating supplier deliveries. Whether your agents talk to a CRM or to an MES, the orchestration problems are the same.
 
 ## What's Inside
 
@@ -18,6 +20,7 @@ Scaling from one AI agent to many that collaborate reliably is an architectural 
 ## Who This Is For
 
 - **Teams exploring multi-agent architectures** — patterns to consider before building
+- **Manufacturing and industrial teams** — applying agent-driven automation to shop-floor operations like inspection, scheduling, and supply chain coordination
 - **Our own team** — this is our living reference, evolving with every iteration
 
 ## Structure
@@ -78,6 +81,17 @@ python3 .claude/skills/snapshot/scripts/build_snapshot.py \
 | `content-agent` | Social posts, case studies, video, images |
 | `education-agent` | LMS platform, lecture slides |
 | `pipeline-agent` | Meeting transcript processing pipeline |
+
+### Example: Manufacturing Agent Ecosystem
+
+*Illustrative example — these patterns apply to any domain-specific agent ecosystem.*
+
+| Repo | Purpose |
+|------|---------|
+| `quality-agent` | Incoming inspection, SPC, non-conformance management |
+| `scheduling-agent` | Production order routing, machine assignment, capacity planning |
+| `supply-chain-agent` | Supplier delivery tracking, purchase order follow-up |
+| `maintenance-agent` | Predictive maintenance alerts, work order creation |
 
 ## License
 
