@@ -257,7 +257,36 @@ When multiple subagents write output files in parallel, use a timestamped run di
 
 ---
 
-### 14. User Preference Feedback Loops
+### 14. MCP Large Response Subagent Isolation
+
+When an MCP tool returns large payloads (>10KB), call it from a subagent instead of the main agent. MCP tool results always embed in the caller's context window with no way to redirect to a file. A subagent processes the data, writes results to a temp file, and returns only a summary to the main agent.
+
+- [ ] Identify MCP calls likely to return large payloads (browser tab lists, bulk CRM records, large issue queries)
+- [ ] Wrap those calls in a subagent with a focused task: "call tool X, extract Y, write to /tmp/Z"
+- [ ] Subagent writes structured results to a temp file (JSON, markdown, or CSV)
+- [ ] Subagent returns a short summary to the main agent (count, key findings, file path)
+- [ ] Main agent reads the temp file only if it needs specific details
+- [ ] Never call high-volume MCP tools directly from the main agent context
+
+**Why:** MCP tool responses have no streaming or file-redirect option. They land entirely in the caller's context window. A single 50KB tab listing or 200-record CRM query can consume 10-20% of the context budget, crowding out instructions and conversation history. Subagents absorb this cost in a disposable context, returning only the distilled result.
+
+**Example:**
+
+```
+main agent: "organize browser tabs"
+  └── subagent: "call get-list-of-open-tabs, group by domain, write to /tmp/tabs-grouped.json"
+       ├── calls MCP tool (large response stays in subagent context)
+       ├── processes and groups results
+       ├── writes /tmp/tabs-grouped.json
+       └── returns: "147 tabs across 23 domains, results in /tmp/tabs-grouped.json"
+  └── main agent reads /tmp/tabs-grouped.json selectively
+```
+
+**Origin:** Observed during browser tab management and bulk CRM workflows where MCP responses consumed significant context budget, degrading instruction-following in subsequent steps.
+
+---
+
+### 15. User Preference Feedback Loops
 
 When a skill generates multiple options (drafts, variants, designs), log the user's selection to build a preference profile over time.
 
