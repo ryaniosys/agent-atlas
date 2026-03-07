@@ -261,28 +261,28 @@ When multiple subagents write output files in parallel, use a timestamped run di
 
 When an MCP tool returns large payloads (>10KB), call it from a subagent instead of the main agent. MCP tool results always embed in the caller's context window with no way to redirect to a file. A subagent processes the data, writes results to a temp file, and returns only a summary to the main agent.
 
-- [ ] Identify MCP calls likely to return large payloads (browser tab lists, bulk CRM records, large issue queries)
+- [ ] Identify MCP calls likely to return large payloads (bulk work order queries, full ERP item catalogs, IoT sensor dumps, large issue lists)
 - [ ] Wrap those calls in a subagent with a focused task: "call tool X, extract Y, write to /tmp/Z"
 - [ ] Subagent writes structured results to a temp file (JSON, markdown, or CSV)
 - [ ] Subagent returns a short summary to the main agent (count, key findings, file path)
 - [ ] Main agent reads the temp file only if it needs specific details
 - [ ] Never call high-volume MCP tools directly from the main agent context
 
-**Why:** MCP tool responses have no streaming or file-redirect option. They land entirely in the caller's context window. A single 50KB tab listing or 200-record CRM query can consume 10-20% of the context budget, crowding out instructions and conversation history. Subagents absorb this cost in a disposable context, returning only the distilled result.
+**Why:** MCP tool responses have no streaming or file-redirect option. They land entirely in the caller's context window. A single 500-record work order export or full ERP item catalog can consume 10-20% of the context budget, crowding out instructions and conversation history. Subagents absorb this cost in a disposable context, returning only the distilled result.
 
 **Example:**
 
 ```
-main agent: "organize browser tabs"
-  └── subagent: "call get-list-of-open-tabs, group by domain, write to /tmp/tabs-grouped.json"
+main agent: "reschedule overdue work orders"
+  └── subagent: "query MES for open work orders, group by production line, write to /tmp/wo-summary.json"
        ├── calls MCP tool (large response stays in subagent context)
-       ├── processes and groups results
-       ├── writes /tmp/tabs-grouped.json
-       └── returns: "147 tabs across 23 domains, results in /tmp/tabs-grouped.json"
-  └── main agent reads /tmp/tabs-grouped.json selectively
+       ├── filters and groups 500+ work orders by line and priority
+       ├── writes /tmp/wo-summary.json
+       └── returns: "523 open work orders across 8 lines, 41 overdue, results in /tmp/wo-summary.json"
+  └── main agent reads /tmp/wo-summary.json selectively
 ```
 
-**Origin:** Observed during browser tab management and bulk CRM workflows where MCP responses consumed significant context budget, degrading instruction-following in subsequent steps.
+**Origin:** Observed in shop floor and ERP integration workflows where MCP responses (bulk sensor readings, work order lists, item catalogs) consumed significant context budget, degrading instruction-following in subsequent steps.
 
 ---
 
