@@ -282,6 +282,8 @@ When a skill generates multiple options (drafts, variants, designs), log the use
 
 **Origin:** Content authoring workflows where multi-variant generation with preference tracking produced measurably better first-draft acceptance rates over time.
 
+**See also:** [decision-log-learning-loop.md](decision-log-learning-loop.md) — extends this pattern to any decision stream (triage, routing, categorization) with structured logging and pattern-based suggestions.
+
 ---
 
 ## Repo Audit Matrix
