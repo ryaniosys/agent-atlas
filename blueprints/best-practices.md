@@ -316,6 +316,50 @@ When a skill generates multiple options (drafts, variants, designs), log the use
 
 ---
 
+### 16. Domain Folder Memory
+
+Place an `_agent_memory.md` file in non-git domain folders (sales accounts, project folders, event folders) that agents work in across multiple sessions. The file serves as a session bootstrapper: minimum context to go from cold to productive in one file read.
+
+- [ ] Named `_agent_memory.md` (leading underscore sorts to top, signals meta-file)
+- [ ] Contains: current status, key file index, external IDs (CRM, ticket, API), next actions (checkboxes), key context bullets, active guidance
+- [ ] Created when a folder has multi-session workflows with external IDs, 3+ files, or pending next actions
+- [ ] NOT created for one-shot folders, archives, or reference-only material
+- [ ] Updated at end of session (capture skill or manual), read first at session start
+- [ ] Excludes: detailed history (separate docs), general rules (belong in AGENTS.md), secrets
+
+**Why:** Without a memory file, each new session burns time re-reading large documents, re-querying CRM IDs, and re-discovering folder structure. A 20-line memory file replaces 5+ minutes of expensive re-lookups and prevents the agent from making stale assumptions about project status.
+
+**Example structure:**
+
+```markdown
+# Agent Memory: Acme Corp
+
+## Status
+Phase 1 in progress. Kickoff done, waiting on data export from client.
+
+## Key Files
+- `proposal_v2.pdf` - signed proposal (CHF 25k, 3 phases)
+- `meeting_notes_2026-03-01.md` - kickoff notes
+- `requirements.md` - validated requirements
+
+## External IDs
+- HubSpot Deal: 123456789
+- Linear Project: ACM-42
+- Contact: jane.doe@acme-corp.example.com
+
+## Next Actions
+- [ ] Follow up on data export (promised by 2026-03-14)
+- [ ] Draft Phase 1 milestone plan
+
+## Context
+- Client prefers async updates over calls
+- Technical contact is not the decision maker
+```
+
+**Origin:** Emerged from sales and project workflows where agents repeatedly spent the first 2-3 exchanges reconstructing context that was already known from prior sessions.
+
+---
+
 ## Repo Audit Matrix
 
 | # | Convention | hub-agent | sales-agent | finance-agent | content-agent | education-agent | pipeline-agent |
