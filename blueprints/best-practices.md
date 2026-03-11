@@ -360,6 +360,23 @@ Phase 1 in progress. Kickoff done, waiting on data export from client.
 
 ---
 
+### 17. Auto-Memory Backup via Symlink
+
+Claude Code stores per-project auto-memory in `~/.claude/projects/*/memory/` which is local-only and not backed up. Symlink each project's memory dir to a file-synced folder so memory survives machine loss.
+
+- [ ] Set `memory_backup_dir` in `config.local.yaml` pointing to a file-synced folder
+- [ ] SessionStart hook checks if `memory/` is already a symlink; if not, moves existing files and creates one
+- [ ] Naming convention: backup dir mirrors Claude Code's path-encoded project names (e.g., `-home-user-git-repos-my-agent`)
+- [ ] No manual setup needed for new repos if using the template-agent SessionStart hook
+
+**Why:** Auto-memory files contain cross-session learnings, workflow preferences, and system knowledge accumulated over dozens of sessions. Losing them means the agent starts cold on every convention and pattern it previously learned. Unlike git-committed docs, auto-memory is the only place for user-specific preferences and corrections.
+
+**Important:** Auto-memory files may contain customer names, contact details, and deal values. They must NOT be committed to git. The backup folder should be file-synced (e.g., Nextcloud, Dropbox), not version-controlled.
+
+**Origin:** Discovered when reviewing data persistence: auto-memory had no backup path, meaning a disk failure would erase all accumulated agent knowledge.
+
+---
+
 ## Repo Audit Matrix
 
 | # | Convention | hub-agent | sales-agent | finance-agent | content-agent | education-agent | pipeline-agent |
