@@ -28,28 +28,28 @@ The triad works because each lens reveals what the others miss:
 ## Architecture
 
 ```
-              ┌──────────────────────────┐
-              │    Observation Sources     │
-              │  (logs, reports, records)  │
-              └────────────┬─────────────┘
+            ┌────────────────────────────┐
+            │     Observation Sources     │
+            │  (logs, reports, records)   │
+            └──────────────┬─────────────┘
                            │
-              ┌────────────▼─────────────┐
-              │    Unit Observation Logs   │
-              │  (structured per-unit data)│
-              └──┬─────────┬─────────┬───┘
-                 │         │         │
-        ┌────────▼──┐ ┌───▼──────┐ ┌▼──────────┐
-        │ Structure  │ │Capability│ │  Culture   │
-        │ Snapshot   │ │ Review   │ │  Snapshot  │
-        └─────┬──────┘ └────┬─────┘ └─────┬─────┘
-              │             │              │
-              └─────────────┼──────────────┘
-                            │
-              ┌─────────────▼──────────────┐
-              │    Cross-Feed Outputs       │
-              │  (recommendations flow      │
-              │   between assessments)      │
-              └────────────────────────────┘
+            ┌──────────────▼─────────────┐
+            │    Unit Observation Logs    │
+            │  (structured per-unit data) │
+            └──┬───────────┬───────────┬─┘
+               │           │           │
+      ┌────────▼───┐ ┌────▼─────┐ ┌───▼────────┐
+      │ Structure   │ │Capability│ │  Culture    │
+      │ Snapshot    │ │ Review   │ │  Snapshot   │
+      └──────┬─────┘ └────┬─────┘ └──────┬──────┘
+             │             │              │
+             └─────────────┼──────────────┘
+                           │
+            ┌──────────────▼──────────────┐
+            │     Cross-Feed Outputs      │
+            │   (recommendations flow     │
+            │    between assessments)     │
+            └─────────────────────────────┘
 ```
 
 ### Shared Data Layer
