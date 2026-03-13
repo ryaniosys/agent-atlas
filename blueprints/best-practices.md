@@ -314,6 +314,8 @@ When a skill generates multiple options (drafts, variants, designs), log the use
 
 **See also:** [decision-log-learning-loop.md](decision-log-learning-loop.md) — extends this pattern to any decision stream (triage, routing, categorization) with structured logging and pattern-based suggestions.
 
+**See also:** [iterative-challenge-document.md](iterative-challenge-document.md) — a multi-round adversarial analysis pattern for high-stakes decisions (hiring, vendor selection, architecture). Each round incorporates new data, updates a scoring system, and refines the recommendation across sessions.
+
 ---
 
 ### 16. Domain Folder Memory
