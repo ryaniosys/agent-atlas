@@ -109,4 +109,10 @@ Add overload detection to your context-capture workflow. Trigger when a session 
 
 ## Reference Implementation
 
-First application: extracting infrastructure management from a CEO assistant hub into a dedicated infra spoke (March 2026). Migrated 13 plans, 9 solution docs, 1 skill. Cross-reference audit found 8 gaps, all fixed before merge.
+**Scenario:** A manufacturing SME's CEO assistant hub accumulated 14 plans, 8 solution docs, and 2 skills related to ERP integration and shop-floor data pipelines. Sessions regularly context-switched between executive tasks (calendar, email, strategy) and deep ERP configuration work (API mappings, data validation rules, vendor-specific quirks).
+
+**Trigger:** The `/cc` overload detection flagged the domain after a session produced 4 ERP-related docs in a single conversation. The hub had 6 ERP plans, 2 ERP skills, and a dedicated project folder with vendor specs.
+
+**Eject:** Created `erp-bridge-agent` as a new spoke. Transfer manifest: 14 plans (MOVE), 8 solution docs (MOVE), 2 skills (MOVE), shared Graph API utility (KEEP, cross-ref). Cross-reference audit found 6 gaps (missing routing entry, incomplete hub-and-spoke diagram, orphaned config section, 3 stale pointers). All fixed before merge.
+
+**Result:** Hub agent context window freed up ~40% of its domain-specific load. ERP work now has its own memory, lessons, and session history. The hub delegates "deploy this connector to the edge gateway" to the spoke agent.
