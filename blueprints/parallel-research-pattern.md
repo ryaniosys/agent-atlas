@@ -46,13 +46,12 @@ Ensures results include obvious choices AND alternatives. Prevents groupthink an
 ## Subagent Configuration
 
 ```
-Agent type: voicemode:papa-bear (thorough research model)
-Execution: run_in_background: true
+Execution: run_in_background: true (all launched in parallel)
 Output: One file per target in a shared output directory
 Duration: ~5-7 minutes per target (web search heavy)
 ```
 
-**Gotcha:** Subagent types must be fully qualified (e.g., `voicemode:papa-bear`, not just `papa-bear`).
+Use the most capable model available for research subagents. Thorough web research benefits from stronger reasoning.
 
 ## When to Use
 
@@ -74,7 +73,6 @@ Duration: ~5-7 minutes per target (web search heavy)
 - **No validation step**: Subagents can fail silently (empty sections, missing frontmatter). Always validate.
 - **Mixing research and scoring**: Research populates a knowledge base (reusable). Scoring evaluates against specific requirements (per-engagement). Keep them separate.
 
-## Reference Implementation
+## Example Use Case
 
-- erp-selector: `/erp-vendor-research` skill
-- Solution doc: `docs/solutions/workflow-patterns/parallel-vendor-research-pattern.md`
+An ERP selection agent that needs to research 7 vendors in parallel: derives a matching brief from requirements, proposes vendors in 3 tiers, launches 7 background subagents (one per vendor), validates all profiles have consistent structure, then presents a summary table for user review.
