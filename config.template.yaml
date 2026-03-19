@@ -10,6 +10,11 @@ org:
 output_dir: ~/Documents/architecture/agent-atlas
 
 # Repos to scan (paths relative to ~/git_repos/)
+# - name: real folder name on disk (used by scan_repos.py to find the repo)
+# - display_name: generic name matching content/current.yaml keys (optional,
+#   defaults to name). Use this when your folder names differ from the
+#   generic names in content/current.yaml.
+# - purpose: one-line description
 repos:
   - name: hub-agent
     purpose: "Central orchestration hub"
@@ -23,3 +28,11 @@ repos:
     purpose: "LMS platform, lecture slides"
   - name: pipeline-agent
     purpose: "Meeting transcript processing"
+
+# Name mapping for local PDF rendering (optional).
+# Maps generic names (used in content/current.yaml and diagrams/*.mmd)
+# to real names. Applied as find-and-replace on the final HTML before
+# PDF generation. Only takes effect in build_snapshot.py.
+# name_mapping:
+#   hub-agent: my-real-hub-repo
+#   sales-agent: my-real-sales-repo

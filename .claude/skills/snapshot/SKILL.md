@@ -19,7 +19,7 @@ Review the totals — sanity-check skill counts and repo presence.
 
 ### 2. Review content YAML
 
-Read `content/current.yaml`. If anything has changed since last snapshot (new primitives, resolved tensions, new repos, maturity changes), update the YAML before proceeding. Ask the user if unsure.
+Read `content/current.yaml`. If anything has changed since last snapshot (new primitives, resolved tensions, new repos, maturity changes), update the YAML before proceeding. Use generic names only. Real names come from `config.local.yaml` name_mapping automatically at PDF render time. Ask the user if unsure.
 
 ### 3. Re-render Mermaid diagrams
 
@@ -59,7 +59,7 @@ Skip this step if pressed for time — it can be done separately.
 
 ### 7. Commit and push
 
-Commit updated YAML (if changed) and any re-rendered SVGs.
+Commit updated YAML (if changed) and any re-rendered SVGs. Never commit `config.local.yaml` or files containing real repo names. The pre-commit hook enforces this via `.sensitive-terms`.
 
 ## Notes
 

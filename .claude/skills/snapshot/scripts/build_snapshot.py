@@ -15,6 +15,7 @@ Usage:
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -81,6 +82,24 @@ def read_svg(name: str) -> str:
     lines = [l for l in content.splitlines()
              if not l.strip().startswith('<?xml') and not l.strip().startswith('<!DOCTYPE')]
     return "\n".join(lines)
+
+
+def substitute_names(html: str, config: dict) -> str:
+    """Replace generic names with real names in rendered HTML.
+
+    Single-pass regex, longest keys first to prevent partial matches.
+    Only runs if config has name_mapping; otherwise returns html unchanged.
+    """
+    mapping = dict(config.get("name_mapping", {}))
+    org_override = config.get("org", {}).get("name")
+    if org_override:
+        mapping["Example Corp"] = org_override
+    if not mapping:
+        return html
+    pattern = re.compile(
+        "|".join(re.escape(k) for k in sorted(mapping, key=len, reverse=True))
+    )
+    return pattern.sub(lambda m: mapping[m.group(0)], html)
 
 
 def fmt_loc(n: int) -> str:
@@ -352,6 +371,15 @@ def main():
     scan = json.loads(Path(args.scan).read_text())
     content = yaml.safe_load(Path(args.content).read_text())
 
+    # Load local config for name mapping and output_dir override
+    config = {}
+    config_path = REPO_ROOT / "config.local.yaml"
+    if config_path.is_file():
+        config = yaml.safe_load(config_path.read_text()) or {}
+
+    if not args.output_dir and config.get("output_dir"):
+        args.output_dir = str(Path(config["output_dir"]).expanduser() / args.month)
+
     output_dir = Path(args.output_dir) if args.output_dir else REPO_ROOT / "snapshots" / args.month
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -359,6 +387,7 @@ def main():
     pdf_path = output_dir / "architecture-overview.pdf"
 
     html = build_html(scan, content, args.month)
+    html = substitute_names(html, config)
     html_path.write_text(html)
     print(f"HTML: {html_path} ({len(html):,} bytes)")
 
