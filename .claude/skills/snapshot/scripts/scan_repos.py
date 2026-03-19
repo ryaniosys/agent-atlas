@@ -29,8 +29,11 @@ DEFAULT_REPO_NAMES = [
 ]
 
 
-def load_repo_names() -> list[str]:
-    """Load repo names from config.local.yaml if it exists, else use defaults."""
+def load_repo_entries() -> list[dict]:
+    """Load repo entries from config.local.yaml if it exists, else use defaults.
+
+    Each entry has 'name' (folder on disk) and 'display_name' (key in content YAML).
+    """
     config_path = Path(__file__).resolve().parent.parent.parent.parent.parent / "config.local.yaml"
     if config_path.is_file():
         try:
@@ -38,10 +41,13 @@ def load_repo_names() -> list[str]:
             data = yaml.safe_load(config_path.read_text())
             repos = data.get("repos", [])
             if repos:
-                return [r["name"] for r in repos if "name" in r]
+                return [
+                    {"name": r["name"], "display_name": r.get("display_name", r["name"])}
+                    for r in repos if "name" in r
+                ]
         except Exception:
             pass
-    return DEFAULT_REPO_NAMES
+    return [{"name": n, "display_name": n} for n in DEFAULT_REPO_NAMES]
 
 EXCLUDE_DIRS = {"venv", ".venv", "__pycache__", "node_modules", ".git", ".mypy_cache"}
 
@@ -184,10 +190,12 @@ def main():
     parser.add_argument("--output", "-o", help="Output JSON file (default: stdout)")
     args = parser.parse_args()
 
-    repo_names = load_repo_names()
+    repo_entries = load_repo_entries()
     repos = {}
-    for name in repo_names:
-        repos[name] = scan_repo(name)
+    for entry in repo_entries:
+        display = entry["display_name"]
+        repos[display] = scan_repo(entry["name"])
+        repos[display]["display_name"] = display
 
     totals = {
         "repos": len([r for r in repos.values() if r.get("exists")]),
