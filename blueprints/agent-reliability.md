@@ -138,6 +138,23 @@ Start with human-in-the-loop, earn autonomy through reliability:
 
 Only promote when measured reliability (not estimated) exceeds the threshold consistently across multiple runs.
 
+### Pattern 4: Alert Only on Persistent Failure
+
+An unattended monitor that alerts on *transient* failures is worse than no monitor: recurring false alarms train the recipient to mute it, so the one real alert is ignored too. Separate transient failures (rate limits, timeouts, 5xx) from persistent ones.
+
+- **Ride through transient failures.** Retry with exponential backoff, honoring any `Retry-After` header the API returns. A rate-limited usage/cost API can throttle a burst of queries for tens of seconds; a generous retry budget (e.g. ~6 attempts, backoff capped near a minute) lets a single run absorb the throttle and still return a correct result.
+- **Fail loud only when the retry budget is exhausted** — that is now a genuine, actionable problem worth paging on, not noise.
+- **Stay silent when there's nothing to say.** A guardrail that fires only on a real breach (threshold, forecast, anomaly) must emit *nothing* otherwise. An empty run is the success case, not an occasion for a heartbeat message.
+
+```
+[Transient error?] --yes--> backoff + retry (honor Retry-After), up to N
+                   --no---> fail loud immediately (real, non-retryable error)
+[Retries exhausted] ------> fail loud: persistent failure, worth paging
+[Nothing tripped]  ------> emit nothing (silent success)
+```
+
+The failure mode this prevents: a monitor that cries wolf on every rate-limit blip until everyone mutes the channel — including for the one alert that mattered.
+
 ---
 
 ## Anti-Patterns
