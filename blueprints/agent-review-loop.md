@@ -40,6 +40,14 @@ The relay is small: it reacts to a review event, checks a few guards, and emits 
 
 **Centralize the relay; don't scatter it per repo.** A per-repo CI job or webhook config drifts and must be re-added to every new repository. One relay — a scheduled poller or a single account/org-level webhook receiver — with a repo allowlist covers all repositories, present and future, from one place. A scheduled poller also avoids standing up an inbound endpoint at all (no signature/verification surface to secure) and survives restarts trivially; opt for it unless you need sub-minute latency.
 
+**Relay only *actionable* reviews, not every review.** A review-on-push reviewer posts a fresh review on every push, including a clean pass once the author has converged. Relaying that clean review wakes the author for nothing and burns a convergence round on an already-done PR. Classify each review before relaying: changes-requested, or carrying inline comments or a non-empty review body, is actionable and relays; approved or empty is convergence, so advance the stored review id but do not relay and do not count a round.
+
+**Bind the PR to its tracked issue authoritatively, not from a parseable string.** To relay, the poller has to map the PR back to the issue whose trigger channel wakes the author. Deriving that from the branch name or PR body is forgeable: a crafted or accidental string can point the relay at the wrong issue and fire the agent against unrelated work. Resolve it from the tracker's own PR link (its native attachment), and treat any identifier parsed from the branch or body as a cross-check only, enforced within the same project namespace.
+
+**Escalate on stall, not only on the round cap.** The convergence cap trips when rounds reach N, but rounds only advances when a new review arrives. If a relayed session errors, or replies without pushing, it produces no new review, so rounds never moves and a cap-only escalation never fires: the PR stalls silently below the cap with no human ever told. Record the time of each relay and escalate if a relayed round yields no new review within a bounded window, independent of the counter.
+
+**Fail loud; a silent relay skip must not read as healthy.** If the relay reports liveness with a dead-man ping, a per-PR failure (the tracker link not present yet, an API error, an unresolved binding) must make the run exit non-zero and skip the ping, not swallow the error while the ping stays green. Otherwise a relay that quietly stopped relaying looks perfectly healthy. Separate a transient "not ready yet" (retry next tick, no alarm) from a real failure (alarm).
+
 ## When To Use
 
 - You have a background coding agent opening PRs and want an independent reviewer's feedback addressed without a human in the middle.
@@ -54,6 +62,10 @@ The relay is small: it reacts to a review event, checks a few guards, and emits 
 - **Per-repo relay wiring.** Drifts, and every new repo needs it re-added. Centralize with an allowlist.
 - **Long-lived babysitting session.** Holds resources and dies on restart. Relay to a fresh session instead.
 - **Firing on human reviews.** The author ends up arguing with teammates. Gate to the reviewer bot only.
+- **Relaying clean reviews.** A clean re-review is convergence, not work; relaying it burns a round and wakes the author for nothing. Classify actionable vs clean first.
+- **Resolving the PR to its issue from the branch name.** Forgeable, and can misroute the agent to unrelated work. Bind via the tracker's native PR link.
+- **Cap-only escalation.** A stalled or errored session never produces a new review, so a round-counter cap never trips. Add a time-based stall escalation.
+- **A dead-man ping that swallows per-PR failures.** The relay looks healthy while it has quietly stopped relaying. Make a real per-PR failure fail the run loudly.
 
 ## Related
 
