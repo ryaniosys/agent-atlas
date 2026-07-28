@@ -41,6 +41,69 @@ Run the skill with a deliberately weaker model as the executor, against a real t
 - **Missing guardrails.** Where the baseline does something unsafe (e.g. uses an invalid field, skips a confirmation), the skill should explicitly prevent it — if it doesn't, that's a gap.
 - **Inherent model limits** (e.g. OCR/transcription noise on fine print) that no instruction fully removes — mitigate with explicit "transcribe carefully + cross-check" steps and a human confirm-gate as backstop.
 
+## Two-Tier Attribution: Capability vs Architecture
+
+The weak-executor eval above asks "is the skill under-specified?". The same harness answers a
+second, higher-leverage question: **"is this even a model problem?"**
+
+Run the identical inputs through **both** a weak and a strong model, with all state mutations
+stripped, then sort each symptom:
+
+| Outcome | Diagnosis | What to do |
+|---|---|---|
+| Strong model fixes it | Capability-shaped | Solvable by a better model, and therefore also solvable by handing the weak model a **pre-computed answer** |
+| Fails identically on **both** | Policy or architecture gap | **No model upgrade will ever fix it.** Stop tuning the prompt and change the system |
+
+That second row is the payoff. A failure that survives a large capability jump is not a prompting
+problem, and no amount of rewording will move it. It is usually a missing rule, a missing input, or
+an impossible ask.
+
+### Worked example
+
+A scheduled job summarized a team standup transcript and cross-checked it against the issue
+tracker. Six symptoms all looked like "the local model is too weak". The two-tier A/B showed:
+
+- **Capability:** the strong model attributed speakers correctly and rendered tracker links; the
+  weak one did neither.
+- **Architecture:** *neither* model emitted the "proposed tickets" section, against a backlog of
+  commitments that had been open for over a week. That single shared failure proved it was a
+  missing rule, not intelligence. It had been mis-read as a prompt problem for weeks.
+
+The strong model also took 16m49 against the weak model's 2m32, so "just use the strong model" was
+never viable for a job on a tight schedule anyway. Runtime is part of the attribution.
+
+### The fix that follows: anything a script can decide, a script decides
+
+Once you know which failures are architectural, the remedy is to move work out of the model until
+what remains fits the cheap model:
+
+- **Deterministic substitution** instead of "remember these 61 correction rules". A vetted
+  correction applied in code always lands; asked to apply it from memory, the model produced a
+  third spelling that was in neither the input nor the rule set.
+- **A rule** instead of a judgment call. "Aged past threshold AND nothing filed AND nothing
+  matching" is three booleans, not a decision.
+- **A pre-computed join** instead of "search this haystack". Narrowing a 407-item candidate list to
+  the 46 that could possibly be relevant turned an impossible question into a lookup.
+- **Pre-rendered artifacts.** Emit a ready-made `link` field rather than asking the model to
+  assemble `[id](url)` from two other fields. Asked to build them, it wrote one of three as plain
+  text.
+
+Result in the worked example: the weak local model went from 0 tracker links, wrong attribution and
+no proposals, to **beating the strong model** (9 links vs 6) at 1/16th the runtime.
+
+### Prompt length is itself a variable
+
+Measured in the same exercise: a condensed prompt got the *same* weak model to apply a correction
+that the full 423-line skill failed to apply. When a weak model is the production target, shrinking
+the skill is a functional change, not tidying. Every instruction you can delete by moving work into
+code buys back attention for the part only the model can do.
+
+### Keep the harness
+
+The sandbox built for the A/B is the acceptance test. Re-run it after the rebuild and require the
+weak model to hit the strong model's numbers before shipping. Without that, "it feels better now" is
+the only evidence you will have.
+
 ## When To Use
 
 - Before shipping a skill that cheaper models will run in production.
