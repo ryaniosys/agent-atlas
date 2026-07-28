@@ -155,6 +155,34 @@ An unattended monitor that alerts on *transient* failures is worse than no monit
 
 The failure mode this prevents: a monitor that cries wolf on every rate-limit blip until everyone mutes the channel — including for the one alert that mattered.
 
+### Pattern 4b: Wire Silence and Loudness to the Runtime's Own Channels
+
+"Stay silent on success, fail loud on failure" stays a principle until you decide *which channel carries which signal*. Most schedulers already hand you three, and using them as intended is less code than inventing your own reporting.
+
+| Channel | Carries | Rule |
+|---------|---------|------|
+| **stdout** | the delivered message | Emit nothing on a healthy run. Empty output should mean "no notification", not "empty notification". |
+| **stderr** | diagnostics | Typically discarded on a zero exit and attached to the alert on a non-zero one, which makes it the right home for a "nothing to report" note that a human running the job by hand still wants to see. |
+| **exit code** | the alarm | Non-zero triggers the runtime's own failure path: a visually distinct alert plus a failed status on the job record. Better than printing your own "ERROR:" line into the normal report stream, where it reads like every other message. |
+
+Four things this reliably gets wrong in practice:
+
+- **A no-op line is not silence.** "0 items found", "no changes since yesterday", "nothing to do" are the single most common source of scheduled-job noise. Route them to stderr and let stdout stay empty.
+- **A per-job instruction can silently override a runtime-level silence contract.** If the platform injects "reply with the silence sentinel when there is nothing to report" but the job's own prompt says "if nothing changed, say *No changes today*", the specific instruction wins and the job notifies on every run. When a job is noisy, audit its own configuration for a no-op fallback before concluding the mechanism is broken.
+- **A cooldown must gate the alarm, not just the message.** On a high-frequency schedule, an upstream outage that alerts on every tick is the cry-wolf failure in a new costume. Gate the *exit code* on the same cooldown as the message, and keep writing every suppressed run to the job's own log so the history stays complete.
+- **Unhandled exceptions bypass your gate.** A crash exits non-zero too, so a systemic failure that raises before reaching your cooldown logic alerts on every tick while your carefully gated per-item failures stay quiet. Funnel every failure path through a single exit point that owns logging, gating, and the return code. Keep interactive runs raising normally so a human debugging by hand still gets the traceback.
+
+```
+[Healthy run]               -> stdout empty, exit 0       (no notification)
+[Nothing to report]         -> note to stderr, exit 0     (no notification)
+[Failure, cooldown elapsed] -> detail to stderr, exit N   (runtime alert + failed status)
+[Failure, within cooldown]  -> log only, exit 0           (no notification, history intact)
+```
+
+Verify the loud path without spamming a real channel: create a throwaway job pointing at a script that only does `exit 1`, aim its delivery at a local or scratch target, fire it once, and read what the runtime rendered. That proves the alert wiring end to end without a single message reaching the team.
+
+There is a matching optimization on the quiet side. If the runtime supports a pre-check script whose output decides whether the expensive step runs, put a cheap deterministic check in front of an LLM-driven job. On a quiet run it skips the model entirely, so silence costs nothing instead of costing a full inference that ends in "nothing to report".
+
 ---
 
 ## Anti-Patterns
