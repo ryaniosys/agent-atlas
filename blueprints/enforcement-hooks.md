@@ -2,11 +2,16 @@
 
 > **Status:** Production-ready pattern, deployed globally.
 >
-> **Last updated:** 2026-07-28
+> **Last updated:** 2026-07-29
 
 ## Purpose
 
 PreToolUse hooks that enforce workflow constraints the agent might otherwise ignore. Unlike advisory instructions in CLAUDE.md (which the agent can override), hooks execute as external processes and provide hard blocks — the tool call never runs.
+
+> **Runtime caveat, added 2026-07-29.** "Hooks are hard blocks" is a property of the *runtime*, not of
+> hooks as an idea. Before relying on a hook as a boundary on any other agent runtime, read
+> [Verify the Failure Mode](#verify-the-failure-mode-before-trusting-a-hook-as-a-boundary). On at least
+> one other runtime the equivalent hook can block, but **fails open**.
 
 ## Why Instructions Alone Aren't Enough
 
@@ -133,6 +138,55 @@ the whole directory on every clone.
 - **Workflow enforcement** — redirect the agent away from bad habits (wrong directories, wrong tools, wrong commands)
 - **Safety rails** — block destructive operations the agent shouldn't perform (see also [secrets-management.md](secrets-management.md) for secret file protection)
 - **Convention compliance** — enforce repo conventions that the agent tends to violate
+
+## Verify the Failure Mode Before Trusting a Hook as a Boundary
+
+A hook is only a boundary if it denies when it breaks. That is a per-runtime property, and it is worth
+checking before you design around it, because the failure is invisible: nothing errors, the guarded
+action simply happens.
+
+Ask four questions of any runtime's hook system:
+
+| Question | Why it decides the design |
+|---|---|
+| **What happens on crash, non-zero exit, or timeout?** | Fail-closed means the hook is a boundary. **Fail-open means it is a smoke detector.** One runtime documents exactly this: malformed output, non-zero exit codes and timeouts "log a warning but never abort the agent loop" |
+| **Which tools does it actually see?** | A matcher on file-write tools is bypassed entirely by a shell tool running `cp`, `mv`, `sed -i` or `rm`. If the runtime's shell tool runs as the same OS user, path-based write guards do not constrain it |
+| **Is consent bound to the script's contents or its path?** | If the allowlist keys on the command *string* rather than a content hash, an approved guard script can be edited afterwards and stays approved |
+| **Does the same guard apply to sub-agents and scheduled runs?** | Hook config often lives per-profile. A delegated worker or cron job may run without it |
+
+Contrast with the sibling mechanism on the same runtime: its *approval* system fails **closed to deny**
+on timeout, and defaults scheduled jobs to deny. Same product, opposite failure direction. Do not
+generalise from one subsystem to another.
+
+## Put the Boundary Outside What It Protects
+
+The design rule that follows. A hook running inside the agent's own process, configured in a file the
+agent can read and reach, guarding that agent, sits **inside the blast radius**.
+
+```
+what actually holds            what only advises
+──────────────────             ─────────────────
+kernel (ro mount, container)   pre-tool-call hook
+  fails closed                   may fail open
+  covers every syscall           covers some tools
+  agent cannot edit it           config is in reach
+```
+
+So:
+
+- **Irreversible or destructive scope → put it where the agent cannot reach.** Read-only mount flags,
+  a container, a separate host, a credential that simply lacks the permission. One runtime's own docs
+  say its filesystem guards are "defense-in-depth, not a hard boundary" and point at containers for
+  real isolation.
+- **Rules the filesystem cannot express → hooks are the right tool**, accepting they are advisory.
+  "Content read from this path must not be sent to a third-party model" has no kernel equivalent.
+- **Pair a fail-open hook with an audit trail.** If you cannot reliably prevent, at least record, so
+  the gap is visible after the fact instead of never.
+
+The same reasoning applies to prose guards: a prohibition written inside the skill that implements the
+safe path only reaches an agent already doing the right thing. Prohibitions belong in the always-loaded
+conduct doc; procedures belong in the skill. See
+[constraint-not-preference.md](constraint-not-preference.md).
 
 ## Design Considerations
 
