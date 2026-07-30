@@ -379,6 +379,41 @@ Claude Code stores per-project auto-memory in `~/.claude/projects/*/memory/` whi
 
 ---
 
+## Testing
+
+### 18. Tests Must Fail, Never Block
+
+- [ ] No test can reach an interactive prompt (device-code login, OAuth consent, `input()`, a TTY password read)
+- [ ] An autouse fixture turns any fall-through to an interactive path into an immediate error
+- [ ] Tests that legitimately exercise the interactive path patch that same seam themselves
+- [ ] A per-test timeout in CI is the backstop, not the primary defence
+
+**Why:** A test that blocks does not fail, it hangs, and a hang is strictly worse than a failure. It produces no output to read, consumes the whole CI budget, and presents as broken infrastructure rather than as a defect. Auth is the usual trigger: a test reaches a code path that falls back to an interactive login, and the flow politely waits for a human who is not there. Device-code flows are the worst case, because they wait for the code's entire lifetime, typically around 15 minutes.
+
+Concrete failure: a red-phase TDD run against a not-yet-implemented non-interactive auth branch fell through to the delegated device-code flow. The expectation was a fast red. What arrived was a hang with an empty output file, indistinguishable from a broken test runner.
+
+Convert the hazard into a loud error:
+
+```python
+@pytest.fixture(autouse=True)
+def _never_open_an_interactive_prompt():
+    """An error beats a hang: fail fast if a test reaches the interactive path."""
+    with patch.object(
+        module_under_test,
+        "_get_interactive_client",
+        side_effect=AssertionError("fell through to the interactive flow"),
+    ):
+        yield
+```
+
+The inner patch in a test that *does* exercise the interactive path is applied later and wins, so the guard costs those tests nothing.
+
+**Bonus:** during red-phase TDD this doubles as a probe for an unimplemented branch. If the guard fires, the code did not take the path the test intended, which is more informative than a bare assertion failure.
+
+**Origin:** Emerged while porting non-interactive service auth into a CLI that until then only had interactive login.
+
+---
+
 ## Repo Audit Matrix
 
 | # | Convention | hub-agent | sales-agent | finance-agent | content-agent | education-agent | pipeline-agent |
