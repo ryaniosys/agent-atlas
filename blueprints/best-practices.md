@@ -414,6 +414,35 @@ The inner patch in a test that *does* exercise the interactive path is applied l
 
 ---
 
+### 19. Measure Whether Anything Reaches the Gate
+
+- [ ] Before building a threshold, measure the distribution of the value it tests against the threshold you plan to set
+- [ ] After shipping, measure how many records actually took each branch
+- [ ] A gate nothing reaches is written down as inert, in the doc and in the ticket, rather than described as protection
+- [ ] A proxy signal is tested in both directions before it is trusted, and a miss is encoded as "no information" rather than as negative evidence
+- [ ] The strength of a signal is config with the measurement written beside it, never a constant in code, and a test fails if it is raised
+
+**Why:** an inert gate and a working gate are indistinguishable from the code, from the tests, and from a clean deploy. Nothing in a diff separates "this brake stops the bad writes" from "this brake has never once engaged". A reviewer cannot catch it either, because the branch is present and correct. The only thing that tells them apart is a measurement against production data, and that measurement is nobody's default habit.
+
+Concrete failure: a write path guarded overwrites of human-curated records behind the model's own self-reported confidence, with a floor of 0.8. Measuring the job's entire history showed the highest confidence it had ever produced was 0.6, on any record. The overwrite branch had never executed. A second, better-principled brake was then designed on top of that same branch, and would have been equally inert, had the measurement not been repeated before building it.
+
+Both brakes were cheap and correct. The defect was calling "correct" the same thing as "load-bearing".
+
+**A self-reported score is not comparable across paths.** The same field, the same code and the same scale produced 0.9 on one input path and never above 0.6 on another, because the number tracked how much text the model was handed rather than how right it was. A threshold tuned on one path is meaningless on the other, so it is not a control surface, and treating it as one is how a gate ends up in a place no record can reach.
+
+**The necessary/sufficient check.** When an external signal is used as evidence for a property, test both directions before trusting it:
+
+* *Is it sufficient?* Does the signal imply the property? Measured against records that already carried an independently curated label, an industry-directory membership agreed with "is a manufacturer" about 81% of the time. Strong, not conclusive.
+* *Is it necessary?* Does the property imply the signal? It does not. Plenty of manufacturers are in no directory.
+
+Neither answer is disqualifying, but the design has to encode them. Not-sufficient means the signal vouches for a hedged value rather than a certainty. Not-necessary means a **miss must mean nothing at all** rather than counting against the record. A proxy used as positive evidence only is sound; the same proxy read symmetrically is a bug that will never announce itself.
+
+**Where to measure from:** the production log or live API, never a fixture. Report the distribution and the count that crossed the line, not just the count. If the answer is zero, that is the finding, and it belongs in the PR body rather than in a footnote.
+
+**Origin:** Emerged from an enrichment pipeline whose two successive write-safety brakes both guarded a branch that no record in the system's history had ever reached.
+
+---
+
 ## Repo Audit Matrix
 
 | # | Convention | hub-agent | sales-agent | finance-agent | content-agent | education-agent | pipeline-agent |
