@@ -2,9 +2,45 @@
 # Pre-commit hook: block commits containing sensitive terms
 # Setup: git config core.hooksPath .githooks
 
-DENY_FILE=".sensitive-terms"
+#
+# This repo is PUBLIC. Maintainers should also export SENSITIVE_TERMS_REQUIRED=1
+# so that a missing deny list is a hard stop rather than a warning.
 
-if [ ! -f "$DENY_FILE" ]; then
+DENY_FILE=".sensitive-terms"
+DENY_SOURCE="$DENY_FILE"
+
+# The deny list is gitignored, so it exists only in the primary clone. This used
+# to `exit 0` when the file was absent, which meant that inside a linked worktree
+# the hook did nothing at all and said nothing about it. Worktrees are the normal
+# way to work here, so that was the common path rather than an edge case: commits
+# went out unscanned while appearing to pass the hook.
+#
+# So: look in the primary clone before giving up, and if there is still no deny
+# list, be loud instead of silent.
+
+if [ ! -f "$DENY_SOURCE" ]; then
+  # In a linked worktree, --git-common-dir resolves to the primary clone's .git,
+  # whose parent is the primary working tree. In a normal clone it resolves to
+  # this same repo, so the lookup is harmless there.
+  COMMON_DIR=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) ||
+    COMMON_DIR=$(git rev-parse --git-common-dir 2>/dev/null)
+  if [ -n "$COMMON_DIR" ]; then
+    CANDIDATE="$(dirname "$COMMON_DIR")/$DENY_FILE"
+    if [ -f "$CANDIDATE" ]; then
+      DENY_SOURCE="$CANDIDATE"
+      echo "note: using deny list from the primary clone ($CANDIDATE)" >&2
+    fi
+  fi
+fi
+
+if [ ! -f "$DENY_SOURCE" ]; then
+  echo "WARNING: $DENY_FILE not found here or in the primary clone." >&2
+  echo "         The sensitive-terms scan did NOT run for this commit." >&2
+  echo "         This repo is public: create $DENY_FILE, or scan by hand." >&2
+  if [ "${SENSITIVE_TERMS_REQUIRED:-0}" = "1" ]; then
+    echo "ERROR: SENSITIVE_TERMS_REQUIRED=1 and no deny list is available." >&2
+    exit 1
+  fi
   exit 0
 fi
 
@@ -16,9 +52,9 @@ while IFS= read -r pattern; do
   if echo "$STAGED_DIFF" | grep -qiE "$pattern"; then
     echo "ERROR: Staged changes match sensitive pattern: $pattern"
     echo "Remove the sensitive content before committing."
-    echo "Patterns defined in $DENY_FILE"
+    echo "Patterns defined in $DENY_SOURCE"
     exit 1
   fi
-done < "$DENY_FILE"
+done < "$DENY_SOURCE"
 
 exit 0
