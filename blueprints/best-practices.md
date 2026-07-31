@@ -379,6 +379,8 @@ Claude Code stores per-project auto-memory in `~/.claude/projects/*/memory/` whi
 
 **Origin:** Discovered when reviewing data persistence: auto-memory had no backup path, meaning a disk failure would erase all accumulated agent knowledge.
 
+**See also:** [rule-corpus-distillation.md](rule-corpus-distillation.md): what to do once those per-repo memory stores accumulate. Elevate rules duplicated across repos into a global layer, promote repeatedly violated rules into mechanical gates, and prune dormant ones so the always-loaded context stops growing.
+
 ---
 
 ## Testing
