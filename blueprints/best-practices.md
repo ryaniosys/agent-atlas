@@ -316,6 +316,8 @@ When a skill generates multiple options (drafts, variants, designs), log the use
 
 **See also:** [iterative-challenge-document.md](iterative-challenge-document.md) — a multi-round adversarial analysis pattern for high-stakes decisions (hiring, vendor selection, architecture). Each round incorporates new data, updates a scoring system, and refines the recommendation across sessions.
 
+**See also:** [selection-vs-adjudication.md](selection-vs-adjudication.md): why a signal that is neither necessary nor sufficient for judging one entity can still be the most valuable input to choosing which entities to process, and how to measure the two uses separately.
+
 ---
 
 ### 16. Domain Folder Memory
